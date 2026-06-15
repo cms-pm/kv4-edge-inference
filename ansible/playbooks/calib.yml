@@ -1,0 +1,120 @@
+---
+# whichllm CALIBRATION bench — clean measured tok/s for the PR.
+# whichllm predicts SHORT/shallow decode (weights-only, bandwidth-bound), so we
+# must measure llama-bench pp512 + tg128 at DEPTH 0 with f16 KV (empty cache =>
+# KV dtype irrelevant; matches whichllm's weights-only model), clock-locked, 5
+# reps. This is whichllm's own benchmark vocabulary (pp512/tg128). Citing our
+# RAG-depth decode numbers instead would be the #75-style apples-to-oranges error.
+# Run:  ansible-playbook playbooks/kv4-calib.yml
+
+- name: calib Phase A — preflight
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-calib"
+  tasks:
+    - name: Scrub + recreate evidence tree
+      become: true
+      ansible.builtin.shell: |
+        rm -rf {{ evidence_dir }}; mkdir -p {{ evidence_dir }}/bench {{ evidence_dir }}/gpu-telemetry
+        chown -R {{ ansible_user }}:{{ ansible_user }} {{ evidence_dir }}
+      changed_when: true
+    - name: Persistence on
+      become: true
+      ansible.builtin.command: nvidia-smi -pm 1
+      changed_when: false
+    - name: Clean slate by port
+      become: true
+      ansible.builtin.shell: "fuser -k 11439/tcp 2>/dev/null || true; sleep 2; exit 0"
+      changed_when: false
+    - name: Stop Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: stopped}
+    - name: Sole-tenant assert
+      ansible.builtin.shell: nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader
+      register: compute_apps
+      changed_when: false
+      failed_when: compute_apps.stdout | trim | length > 0
+    - name: Lock clocks to TDP
+      become: true
+      ansible.builtin.command: nvidia-smi --lock-gpu-clocks=tdp
+      changed_when: true
+    - name: Record locked clocks + mem clock (bandwidth provenance)
+      ansible.builtin.shell: nvidia-smi --query-gpu=clocks.current.sm,clocks.current.memory,clocks.max.memory --format=csv,noheader
+      register: clk
+      changed_when: false
+    - name: Clocks
+      ansible.builtin.debug:
+        var: clk.stdout_lines
+
+- name: calib Phase B — llama-bench pp512/tg128 per model (f16 KV, 5 reps)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-calib"
+    cuda_lib: /usr/local/cuda/lib64
+    bench_bin: "{{ llama_bin_dir }}/llama-bench"
+    models:
+      - {tag: qwen3-1.7b,   file: qwen3-1.7b.gguf}
+      - {tag: llama32-3b,   file: llama-3.2-3b-instruct.gguf}
+      - {tag: smollm2-1.7b, file: smollm2-1.7b-instruct.gguf}
+      - {tag: minicpm5-1b,  file: minicpm5-1b.gguf}
+  tasks:
+    - name: llama-bench pp512 tg128 (f16, depth 0, ngl 99, fa 1, r5)
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ bench_bin }} \
+          -m {{ model_dir }}/{{ item.file }} -ngl 99 -fa 1 \
+          -ctk f16 -ctv f16 -p 512 -n 128 -r 5 -o jsonl \
+          > bench/{{ item.tag }}.jsonl 2> bench/{{ item.tag }}.err
+        exit 0
+      loop: "{{ models }}"
+      loop_control: {label: "{{ item.tag }}"}
+      changed_when: true
+      failed_when: false
+    - name: Calibration summary (pp512 + tg128 per model)
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        for t in qwen3-1.7b llama32-3b smollm2-1.7b minicpm5-1b; do
+          echo -n "$t: "
+          python3 -c "import json;rows=[json.loads(l) for l in open('bench/$t.jsonl') if l.strip()];print(' '.join('%s%d=%.1f(+-%.2f)'%('pp' if r['n_gen']==0 else 'tg', r['n_prompt'] if r['n_gen']==0 else r['n_gen'], r['avg_ts'], r['stddev_ts']) for r in rows), 'size=%dMiB'%(rows[0]['model_size']//1048576))" 2>/dev/null || echo "FAIL: $(tail -1 bench/$t.err)"
+        done
+      register: calib
+      changed_when: false
+    - name: Calibration results
+      ansible.builtin.debug:
+        var: calib.stdout_lines
+
+- name: calib Phase Z — reset + fetch
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-calib"
+  tasks:
+    - name: Reset GPU clocks
+      become: true
+      ansible.builtin.command: nvidia-smi --reset-gpu-clocks
+      changed_when: true
+      ignore_errors: true
+    - name: Restart Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: started}
+      ignore_errors: true
+    - name: Ensure controller evidence dir exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/evidence/kv4-calib"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+    - name: Fetch evidence
+      ansible.posix.synchronize:
+        src: "{{ evidence_dir }}/"
+        dest: "{{ playbook_dir }}/evidence/kv4-calib/"
+        mode: pull
+        recursive: true
+    - name: Done
+      ansible.builtin.debug:
+        msg: "calibration bench complete. Evidence: ./evidence/kv4-calib/"

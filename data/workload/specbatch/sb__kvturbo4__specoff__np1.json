@@ -1,0 +1,81 @@
+{
+  "npl": 1,
+  "reps": 3,
+  "median_agg_decode_tok_s": 13.574918240125982,
+  "agg_decode_tok_s_runs": [
+    13.474535036843768,
+    13.574918240125982,
+    13.578282190757658
+  ],
+  "median_mean_req_decode_tok_s": 50.357063050190256,
+  "accept_rate_runs": [
+    null,
+    null,
+    null
+  ],
+  "bursts": [
+    {
+      "wall_s": 9.49940013885498,
+      "agg_predicted": 128,
+      "agg_decode_tok_s": 13.474535036843768,
+      "mean_req_decode_tok_s": 50.30003183048889,
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "accept_rate": null,
+      "res": [
+        {
+          "prompt_n": 1777,
+          "prompt_ms": 6929.974,
+          "prompt_per_second": 256.4223184675729,
+          "predicted_n": 128,
+          "predicted_ms": 2544.73,
+          "predicted_per_second": 50.30003183048889,
+          "draft_n": null,
+          "draft_n_accepted": null
+        }
+      ]
+    },
+    {
+      "wall_s": 9.429154396057129,
+      "agg_predicted": 128,
+      "agg_decode_tok_s": 13.574918240125982,
+      "mean_req_decode_tok_s": 50.357063050190256,
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "accept_rate": null,
+      "res": [
+        {
+          "prompt_n": 1777,
+          "prompt_ms": 6880.89,
+          "prompt_per_second": 258.25147618985335,
+          "predicted_n": 128,
+          "predicted_ms": 2541.848,
+          "predicted_per_second": 50.357063050190256,
+          "draft_n": null,
+          "draft_n_accepted": null
+        }
+      ]
+    },
+    {
+      "wall_s": 9.426818370819092,
+      "agg_predicted": 128,
+      "agg_decode_tok_s": 13.578282190757658,
+      "mean_req_decode_tok_s": 50.377298415043605,
+      "draft_n": 0,
+      "draft_n_accepted": 0,
+      "accept_rate": null,
+      "res": [
+        {
+          "prompt_n": 1777,
+          "prompt_ms": 6879.515,
+          "prompt_per_second": 258.30309258719547,
+          "predicted_n": 128,
+          "predicted_ms": 2540.827,
+          "predicted_per_second": 50.377298415043605,
+          "draft_n": null,
+          "draft_n_accepted": null
+        }
+      ]
+    }
+  ]
+}

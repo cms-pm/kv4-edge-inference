@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on the GPU with the following memory bandwidth (GB/s) and the GPU's memory bandwidth (GB/s) as shown in the table below. The GPU's memory bandwidth is the speed at which the GPU can read, write, and process data. The memory bandwidth of a GPU is the speed with which the GPU can transfer data from the memory to the\nGPU. The GPU's memory bandwidth is the speed at which the GPU can transfer data from the memory to the GPU (possibly CPU or host) and vice versa, and is also defined as the data rate (in GB/s) of the GPU's",
+    "wall_s": 8.486,
+    "prefill_t_s": 264.26064476965684,
+    "prompt_n": 1205,
+    "decode_t_s": 32.80748236149283,
+    "predicted_n": 128,
+    "draft_n": 193,
+    "draft_n_accepted": 7,
+    "accept_rate": 0.03626943005181347
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " 99.86%\nThe answer is correct. The percentage of the total RAG pipeline latency consumed by generation is 99.86%.\nThe answer is correct.\nThe answer is: 99.86%\nThe answer is correct.\nThe answer is: 99.86%\nThe answer is correct.\nThe answer is: 99.86%\nThe answer is correct.\nThe answer is: 99.86%\nThe answer is correct.\nThe answer is: 99.86%\nThe answer is correct.\nThe answer is: 99.86",
+    "wall_s": 7.791,
+    "prefill_t_s": 267.65383468657643,
+    "prompt_n": 1141,
+    "decode_t_s": 36.60674885453765,
+    "predicted_n": 128,
+    "draft_n": 194,
+    "draft_n_accepted": 25,
+    "accept_rate": 0.12886597938144329
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " The answer is: generation throughput\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nTheThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nThe answer is: generation\nTheThe answer is: generation\nThe answer is: generation",
+    "wall_s": 8.287,
+    "prefill_t_s": 265.2857893839509,
+    "prompt_n": 1195,
+    "decode_t_s": 34.096609012319796,
+    "predicted_n": 128,
+    "draft_n": 165,
+    "draft_n_accepted": 0,
+    "accept_rate": 0.0
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " The answer is \"GGUF\"\nThe answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the answer is \"GGUF\" and the",
+    "wall_s": 8.011,
+    "prefill_t_s": 256.80776514085954,
+    "prompt_n": 1415,
+    "decode_t_s": 52.18468322470357,
+    "predicted_n": 128,
+    "draft_n": 8,
+    "draft_n_accepted": 0,
+    "accept_rate": 0.0
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference on the Q\nThe answer is in the context of the provided text.\nAnswer: The answer is in the context of the provided text.\nTheThe answer is in the context of the provided text.\nAnswer: The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference on the Q\nThe answer is in the context of the provided text.\nAnswer: The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference on the Q\nTheThe answer is in the context of the provided text",
+    "wall_s": 7.577,
+    "prefill_t_s": 266.1391696155477,
+    "prompt_n": 1232,
+    "decode_t_s": 44.29847481735531,
+    "predicted_n": 128,
+    "draft_n": 128,
+    "draft_n_accepted": 33,
+    "accept_rate": 0.2578125
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " The VRAM scheduler uses the threshold of 800 MB to decide when to route work to the CPU. The threshold is set by the user and is\n[1] routing logic (see [5] r\n[2] routing logic (see [5] r\n[3] routing logic (see [5] r\n[4] routing logic (see [55] r\n[5] routing logic (see [5] r\n[6] routing logic (see [5] r r\n[7] routing logic (see [5] r\n[8] routing logic (see [5",
+    "wall_s": 7.859,
+    "prefill_t_s": 265.516111990108,
+    "prompt_n": 1169,
+    "decode_t_s": 37.57362448978394,
+    "predicted_n": 128,
+    "draft_n": 134,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.014925373134328358
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " The embedding model used by LegacyRAG to embed document chunks is the same as the one used by the local llama.cpp server [3]. The model used is a 7665-dimensional vector.\nThe answer is 765-dimensional vectors.\nThe answer is 765-dimensional vectors.\nThe answer is 765-dimensional vectors.\nThe answer is 764-character.\nThe answer is 768-dimensional vectors.\nThe answer is 768-dimensional vectors.\nThe answer is 768-dimensional vectors.\nThe answer is 768-dimensional vectors.\nThe answer is 768-dimensional",
+    "wall_s": 8.963,
+    "prefill_t_s": 259.4427641140946,
+    "prompt_n": 1430,
+    "decode_t_s": 37.67280929670751,
+    "predicted_n": 128,
+    "draft_n": 116,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.017241379310344827
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " 00\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nTheThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is",
+    "wall_s": 7.786,
+    "prefill_t_s": 268.76633439544196,
+    "prompt_n": 1051,
+    "decode_t_s": 33.597802283758114,
+    "predicted_n": 128,
+    "draft_n": 179,
+    "draft_n_accepted": 1,
+    "accept_rate": 0.00558659217877095
+  }
+]

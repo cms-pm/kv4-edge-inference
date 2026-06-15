@@ -1,0 +1,112 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] routing logic.
+C. VRAM Scheduler
+The VRAM scheduler is the core contribution of LegacyRAG.
+Before every embedding operation it runs:
+nvidia-smi --query-gpu=index,memory.free
+--format=csv,noheader
+and routes by the following policy:
+1) If any GPU reports free VRAM below Tvram (default:
+800 MB), route to CPU.
+2) If a GenerationContext lock is active (generation
+in progress), route to CPU regardless of VRAM state.
+3) Otherwise, route to GPU.
+Every decision is timestamped and appended
+to schedule_decisions.jso
+
+[2] 0.0
+Min. free VRAM GPU 0 1,409 MB
+Min. free VRAM GPU 1 1,993 MB
+ThresholdT vram 800 MB
+Fig. 4. VRAM scheduler behavior. Left: 100% GPU routing (pie chart). Right:
+per-GPU free VRAM at each decision with the 800 MB threshold (dashed
+red) and safe zone (green). GPU 0 fluctuates with load; GPU 1 stays near
+2,000 MB throughout.
+1,1 [3] degrades prefill from ∼26 to 0.52 tok/s (50 × slower)
+while decode remains essentially unchanged (9 →8.35 tok/s, Table V). This asymmetry matches the communication-overhead
+analy
+
+[3] ree VRAM below Tvram (default:
+800 MB), route to CPU.
+2) If a GenerationContext lock is active (generation
+in progress), route to CPU regardless of VRAM state.
+3) Otherwise, route to GPU.
+Every decision is timestamped and appended
+to schedule_decisions.jsonl. The
+GenerationContext is a thread-safe counter that
+prevents the embedding model [6] ( ≈280 MB peak) from
+competing with active generation for VRAM. The threshold
+Tvram = 800 MB was selected empirically. With phi3-mini
+occupying ≈2.1 GB and the KV cach
+
+[4] ressure late in long
+generation runs.
+E. VRAM Scheduler Behavior
+All fifteen scheduling decisions routed embeddings to GPU
+(Table IV, Figs. 4–5). Both cards maintained free VRAM well
+above the 800 MB threshold throughout. Zero OOM events
+occurred. The CPU fallback provides a safety margin for
+deployments where display servers, browsers, or secondary
+applications share GPU 0 memory—a common scenario in
+institutional workstations that would otherwise produce silent
+OOM failures.
+F . Dual-GPU Layer Split
+Split
+
+[5] URATION
+Config Prefill Decode Max
+(tok/s) (tok/s)Conc.
+Single GPU
+(idle)
+∼26∼9 1
+Single GPU (sustained)
+1–6 0.29–1.66 1
+Dual GPU (idle)0.528.35 1
+Dual GPU (concurrent)
+N/A N/A0
+B. Value of VRAM-Aware Scheduling
+The CPU fallback path was not triggered in our experiments
+because VRAM stayed above threshold throughout. Its value is
+preventive: in institutional deployments where display servers
+and browser processes share GPU 0, available VRAM can
+drop by several hundred megabytes, bringing it toward the
+800 MB
+
+[6] or GPU based on live free-VRAM
+thresholds, preventing out-of-memory crashes under concurrent
+load. Empirical evaluation reveals that generation dominates
+RAG pipeline latency at 99.86%, sustained generation throughput
+ranges from 0.29 to 1.66 tok/s due to non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. Legac
+
+[7] U inference with CPU embedding
+offload via the VRAM scheduler is the optimal configuration.
+V. DISCUSSION
+A. Practical Deployment Envelope
+Single-user sequential workloads with 308–575 s end-to-end
+latency are feasible for asynchronous use cases such as batch
+document processing and low-frequency queries in institutional
+settings [7]. The total hardware cost for this deployment is
+approximately $200–$300 for a used Dell Precision Tower
+5810 with dual K4200s on the secondary market, with zero
+per-query API c
+
+[8] r experiments
+because VRAM stayed above threshold throughout. Its value is
+preventive: in institutional deployments where display servers
+and browser processes share GPU 0, available VRAM can
+drop by several hundred megabytes, bringing it toward the
+800 MB threshold. Without the GenerationContext guard,
+a concurrent embedding request during active generation could
+consume the ≈280 MB needed by nomic-embed-text [6] and
+cause a mid-generation OOM crash.
+C. Vulkan as a Long-Term Path
+The NVIDIA 470 driver prov
+
+Question: What free-VRAM threshold does the scheduler use to decide when to route work to the CPU?
+Answer:

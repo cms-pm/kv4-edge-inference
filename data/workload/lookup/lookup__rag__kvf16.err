@@ -1,0 +1,16 @@
+0.00.065.766 I common_init_result: fitting params to device memory ...
+0.00.065.779 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.918.266 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.682.869 W llama_context: n_ctx_seq (8192) < n_ctx_train (40960) -- the full capacity of the model will not be utilized
+0.01.712.054 W common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+<work>/build/llama-cpp-turboquant/src/llama-context.cpp:1668: GGML_ASSERT(n_tokens_all <= cparams.n_batch) failed
+<llama-bin>/libggml-base.so.0(+0x18365) [0x7eff54698365]
+<llama-bin>/libggml-base.so.0(ggml_print_backtrace+0x1df) [0x7eff5469873f]
+<llama-bin>/libggml-base.so.0(ggml_abort+0x11e) [0x7eff546988ce]
+<llama-bin>/libllama.so.0(_ZN13llama_context6decodeERK11llama_batch+0x1cce) [0x7eff53ed009e]
+<llama-bin>/libllama.so.0(llama_decode+0xb) [0x7eff53ed035b]
+<llama-bin>/llama-lookup(+0x3afc) [0x5566bb57dafc]
+/lib/x86_64-linux-gnu/libc.so.6(+0x29ca8) [0x7eff53835ca8]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x7eff53835d65]
+<llama-bin>/llama-lookup(+0x4a71) [0x5566bb57ea71]
+Aborted

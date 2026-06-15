@@ -1,0 +1,15 @@
+# Copy to ansible/group_vars/all.yml and edit for your environment.
+# These back the variables the playbooks reference after genericization.
+
+work_dir: /opt/kv4                                   # base dir for evidence on the GPU host
+model_dir: /opt/models                               # GGUF directory
+llama_bin_dir: /opt/llama-cpp-turboquant/build/bin   # llama-bench / llama-server / …
+# cuda_lib and ncu are set per-playbook (defaults: /usr/local/cuda/lib64 ; `ncu` on PATH)
+
+# matrix_profile: smoke (fast gate) | full (paper matrix). Override with -e.
+matrix_profile: full
+
+# RAG arm (rag-real.yml) — parameterized per model
+model_tag: qwen3-1.7b
+model_file: qwen3-1.7b.gguf
+embed_model: nomic-embed-text

@@ -1,0 +1,91 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] on dual Maxwell GPUs via Vulkan, reporting generation
+throughput variance, full latency breakdown, and multiGPU split behavior under PCIe-only interconnect [9].
+4) We show that dual-GPU Vulkan layer splitting is counterproductive on Maxwell hardware without NVLink,
+degrading prefill 50× due to inter-device synchronization
+overhead.
+LegacyRAG is publicly available at https://github.com/
+azeez-1904/LegacyRAG.
+II. BACKGROUND ANDRELATEDWORK
+A. Retrieval-Augmented Generation
+Lewiset al.[1] introduced RAG as a f
+
+[2] n). GPU 0 fluctuates with load; GPU 1 stays near
+2,000 MB throughout.
+1,1 [3] degrades prefill from ∼26 to 0.52 tok/s (50 × slower)
+while decode remains essentially unchanged (9 →8.35 tok/s, Table V). This asymmetry matches the communication-overhead
+analysis of Narayananet al.[9]: during prefill, all prompt
+tokens are processed simultaneously and every transformer
+layer crossing the inter-GPU boundary requires a Vulkan
+pipeline barrier, multiplied by the full prompt length. During
+decode, a single token is
+
+[3] or GPU based on live free-VRAM
+thresholds, preventing out-of-memory crashes under concurrent
+load. Empirical evaluation reveals that generation dominates
+RAG pipeline latency at 99.86%, sustained generation throughput
+ranges from 0.29 to 1.66 tok/s due to non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. Legac
+
+[4] ions.
+Right: prefill tok/s showing the 50 × degradation under dual-GPU layer split.
+High variance across single-GPU sustained requests (Req 1–3) reflects thermal
+and Vulkan state effects.
+GPTQ [10] and AWQ [11]—produces negligible end-to-end
+improvement when generation latency is this dominant.
+D. Generation Throughput Variance
+Three identical sequential requests produced 0.89, 1.66,
+and 0.29 tok/s—a 5.7 × range (Fig. 3). Three mechanisms
+contribute:
+Thermal throttling.Maxwell does not expose GPU frequency
+
+[5] sis of Narayananet al.[9]: during prefill, all prompt
+tokens are processed simultaneously and every transformer
+layer crossing the inter-GPU boundary requires a Vulkan
+pipeline barrier, multiplied by the full prompt length. During
+decode, a single token is generated per step and the per-step
+synchronization cost is amortized. Unlike NVLink-connected
+clusters [9], the PCIe 3.0 bus between the two K4200s has
+insufficient bandwidth to amortize multi-layer barrier overhead
+at prefill scale.
+Three simultaneous r
+
+[6] . Emb.(s) Ret.(s) Gen.(s) Total(s) tok/s
+1 0.625 0.0002 575.25 575.89 0.89
+2 0.835 0.0002 307.68 308.53 1.66
+3 0.511 0.0001 525.23 525.76 0.29
+Mean 0.657 0.0002 469.39 470.06 0.95
+Fig. 3. Generation throughput. Left: decode tok/s across all four configurations.
+Right: prefill tok/s showing the 50 × degradation under dual-GPU layer split.
+High variance across single-GPU sustained requests (Req 1–3) reflects thermal
+and Vulkan state effects.
+GPTQ [10] and AWQ [11]—produces negligible end-to-end
+improvement wh
+
+[7] non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. LegacyRAG is released
+as open-source software to support reproducible research on
+constrained-hardware AI inference.
+Index Terms—edge computing, retrieval-augmented generation,
+legacy GPU inference, Vulkan compute, VRAM scheduling, onpremise AI, resource-constr
+
+[8] uadro K4200.
+2) We design and implement LegacyRAG, a VRAM-aware
+RAG pipeline with a pre-operation scheduler that queries
+live GPU memory state and routes embedding workloads
+to prevent OOM conditions.
+3) We empirically characterize RAG pipeline performance
+on dual Maxwell GPUs via Vulkan, reporting generation
+throughput variance, full latency breakdown, and multiGPU split behavior under PCIe-only interconnect [9].
+4) We show that dual-GPU Vulkan layer splitting is counterproductive on Maxwell hardware witho
+
+Question: By what factor does naive dual-GPU layer splitting degrade prompt prefill throughput?
+Answer:

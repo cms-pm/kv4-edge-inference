@@ -1,0 +1,8 @@
+{
+  "_comment": "Extractive-QA probe set for the RAG arm. Each question's gold answer must appear verbatim somewhere in YOUR corpus.txt; grading is case-insensitive gold-substring exact match. Replace these with questions over your own corpus.",
+  "questions": [
+    {"id": "q1", "q": "What is the GPU memory bandwidth stated in the document?", "gold": "192 gigabytes per second"},
+    {"id": "q2", "q": "What fraction of pipeline latency does generation dominate?", "gold": "99.86"},
+    {"id": "q3", "q": "By what factor does multi-GPU layer splitting degrade prefill?", "gold": "50"}
+  ]
+}

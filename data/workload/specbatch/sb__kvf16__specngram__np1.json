@@ -1,0 +1,81 @@
+{
+  "npl": 1,
+  "reps": 3,
+  "median_agg_decode_tok_s": 13.273417472091616,
+  "agg_decode_tok_s_runs": [
+    13.12487018961441,
+    13.273417472091616,
+    13.278035739464046
+  ],
+  "median_mean_req_decode_tok_s": 44.69214444780411,
+  "accept_rate_runs": [
+    0.29775280898876405,
+    0.29775280898876405,
+    0.29775280898876405
+  ],
+  "bursts": [
+    {
+      "wall_s": 9.752477407455444,
+      "agg_predicted": 128,
+      "agg_decode_tok_s": 13.12487018961441,
+      "mean_req_decode_tok_s": 44.15863991389065,
+      "draft_n": 178,
+      "draft_n_accepted": 53,
+      "accept_rate": 0.29775280898876405,
+      "res": [
+        {
+          "prompt_n": 1777,
+          "prompt_ms": 6828.071,
+          "prompt_per_second": 260.2491977602459,
+          "predicted_n": 128,
+          "predicted_ms": 2898.64,
+          "predicted_per_second": 44.15863991389065,
+          "draft_n": 178,
+          "draft_n_accepted": 53
+        }
+      ]
+    },
+    {
+      "wall_s": 9.643334150314331,
+      "agg_predicted": 128,
+      "agg_decode_tok_s": 13.273417472091616,
+      "mean_req_decode_tok_s": 44.69214444780411,
+      "draft_n": 178,
+      "draft_n_accepted": 53,
+      "accept_rate": 0.29775280898876405,
+      "res": [
+        {
+          "prompt_n": 1777,
+          "prompt_ms": 6773.452,
+          "prompt_per_second": 262.3477659544941,
+          "predicted_n": 128,
+          "predicted_ms": 2864.038,
+          "predicted_per_second": 44.69214444780411,
+          "draft_n": 178,
+          "draft_n_accepted": 53
+        }
+      ]
+    },
+    {
+      "wall_s": 9.63998007774353,
+      "agg_predicted": 128,
+      "agg_decode_tok_s": 13.278035739464046,
+      "mean_req_decode_tok_s": 44.74784415025068,
+      "draft_n": 178,
+      "draft_n_accepted": 53,
+      "accept_rate": 0.29775280898876405,
+      "res": [
+        {
+          "prompt_n": 1777,
+          "prompt_ms": 6773.418,
+          "prompt_per_second": 262.3490828411889,
+          "predicted_n": 128,
+          "predicted_ms": 2860.473,
+          "predicted_per_second": 44.74784415025068,
+          "draft_n": 178,
+          "draft_n_accepted": 53
+        }
+      ]
+    }
+  ]
+}

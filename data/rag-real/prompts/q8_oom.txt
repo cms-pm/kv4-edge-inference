@@ -1,0 +1,101 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] ressure late in long
+generation runs.
+E. VRAM Scheduler Behavior
+All fifteen scheduling decisions routed embeddings to GPU
+(Table IV, Figs. 4–5). Both cards maintained free VRAM well
+above the 800 MB threshold throughout. Zero OOM events
+occurred. The CPU fallback provides a safety margin for
+deployments where display servers, browsers, or secondary
+applications share GPU 0 memory—a common scenario in
+institutional workstations that would otherwise produce silent
+OOM failures.
+F . Dual-GPU Layer Split
+Split
+
+[2] ed hardware these workloads
+compete for VRAM, and naive co-scheduling causes out-ofmemory (OOM) crashes. Multi-GPU inference literature [9]
+shows that inter-device synchronization dominates throughput
+at low memory bandwidth, a finding our experiments confirm
+on Maxwell-class hardware.
+This paper makes four contributions:
+1) We demonstrate that Vulkan [4] provides a viable path to
+GPU-accelerated LLM inference on CUDA-abandoned
+hardware, achieving a 1.39 × generation speedup over
+CPU-only inference on the Q
+
+[3] non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. LegacyRAG is released
+as open-source software to support reproducible research on
+constrained-hardware AI inference.
+Index Terms—edge computing, retrieval-augmented generation,
+legacy GPU inference, Vulkan compute, VRAM scheduling, onpremise AI, resource-constr
+
+[4] routing logic.
+C. VRAM Scheduler
+The VRAM scheduler is the core contribution of LegacyRAG.
+Before every embedding operation it runs:
+nvidia-smi --query-gpu=index,memory.free
+--format=csv,noheader
+and routes by the following policy:
+1) If any GPU reports free VRAM below Tvram (default:
+800 MB), route to CPU.
+2) If a GenerationContext lock is active (generation
+in progress), route to CPU regardless of VRAM state.
+3) Otherwise, route to GPU.
+Every decision is timestamped and appended
+to schedule_decisions.jso
+
+[5] or GPU based on live free-VRAM
+thresholds, preventing out-of-memory crashes under concurrent
+load. Empirical evaluation reveals that generation dominates
+RAG pipeline latency at 99.86%, sustained generation throughput
+ranges from 0.29 to 1.66 tok/s due to non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. Legac
+
+[6] equests all failed with first-token
+timeouts (600 s each, batch wall time 1,800 s). With llama.cpp
+serializing requests through a single inference slot [3] and each
+generation taking 308–575 s, concurrent operation is infeasible
+on this hardware. Single-GPU inference with CPU embedding
+offload via the VRAM scheduler is the optimal configuration.
+V. DISCUSSION
+A. Practical Deployment Envelope
+Single-user sequential workloads with 308–575 s end-to-end
+latency are feasible for asynchronous use cases such as ba
+
+[7] r experiments
+because VRAM stayed above threshold throughout. Its value is
+preventive: in institutional deployments where display servers
+and browser processes share GPU 0, available VRAM can
+drop by several hundred megabytes, bringing it toward the
+800 MB threshold. Without the GenerationContext guard,
+a concurrent embedding request during active generation could
+consume the ≈280 MB needed by nomic-embed-text [6] and
+cause a mid-generation OOM crash.
+C. Vulkan as a Long-Term Path
+The NVIDIA 470 driver prov
+
+[8] ok/s) followed
+Request 1 immediately, benefiting from residual warm VRAM
+caches and pre-compiled Vulkan shader pipelines. Cold-start
+requests (1 and 3) were slower.
+KV cache pressure.The KV cache grows within the fixed
+4 GB VRAM budget, increasing memory pressure late in long
+generation runs.
+E. VRAM Scheduler Behavior
+All fifteen scheduling decisions routed embeddings to GPU
+(Table IV, Figs. 4–5). Both cards maintained free VRAM well
+above the 800 MB threshold throughout. Zero OOM events
+occurred. The CPU
+
+Question: How many out-of-memory events occurred during the scheduler evaluation?
+Answer:

@@ -1,0 +1,96 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] or GPU based on live free-VRAM
+thresholds, preventing out-of-memory crashes under concurrent
+load. Empirical evaluation reveals that generation dominates
+RAG pipeline latency at 99.86%, sustained generation throughput
+ranges from 0.29 to 1.66 tok/s due to non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. Legac
+
+[2] en generation latency is this dominant.
+D. Generation Throughput Variance
+Three identical sequential requests produced 0.89, 1.66,
+and 0.29 tok/s—a 5.7 × range (Fig. 3). Three mechanisms
+contribute:
+Thermal throttling.Maxwell does not expose GPU frequency monitoring through Vulkan [4], making throttle events
+silent. Request 3 (0.29 tok/s, 525 s for 150 tokens) exhibited
+substantially lower throughput under nominally identical conditions, consistent with thermal onset.
+Queue-induced warm-up.Request 2 (1.66 t
+
+[3] 2 9.07
+Speedup (generation) 1.00×1.39×
+Model load time (s) 0.044 1.954
+Fig. 2. RAG request latency breakdown. Generation dominates at 99.86% of
+total latency across all three single-GPU requests. The dual-GPU bar (purple,
+264 s) shows lower total latency but at the cost of 50 × prefill degradation
+(Section IV-F).
+2.03 GiB) is loaded with all 33 layers offloaded to Vulkan [4]
+(-ngl 99 ). The generator implements two-phase stall detection: a 600 s first-token timeout and a 45 s inter-token timeout,
+with progr
+
+[4] lity 3.0, dropped from CUDA 11.0 [2]) running a
+3.82 B parameter quantized language model [5] via the llama.cpp
+Vulkan backend [3]. A pre-operation VRAM scheduler queries
+both GPUs via nvidia-smi before every embedding operation
+and routes workloads to CPU or GPU based on live free-VRAM
+thresholds, preventing out-of-memory crashes under concurrent
+load. Empirical evaluation reveals that generation dominates
+RAG pipeline latency at 99.86%, sustained generation throughput
+ranges from 0.29 to 1.66 tok/s due to
+
+[5] m GPU memory
+bandwidth (173 GB/s vs. ≈45 GB/s dual-channel DDR4 on the
+E5-1620 v3), explaining the generation speedup.
+C. RAG Pipeline Benchmark
+Fig. 2 and Table III show end-to-end RAG latency for three
+sequential requests following the architecture of Lewiset al.[1].
+Generation accounts for 99.86% of total pipeline latency;
+embedding 0.14%; retrieval <0.001%. Any acceleration of
+embedding or retrieval—including the quantization gains of
+TABLE III
+LEGACYRAG PIPELINELATENCY(SEQUENTIAL, SINGLEGPU VULKAN)
+Req
+
+[6] o our
+knowledge, no prior published work has characterized full RAG
+pipeline performance on Maxwell-era hardware via Vulkan.
+D. Multi-GPU Parallelism and Communication Overhead
+Narayananet al.[9] showed that sub-optimal tensor and
+pipeline parallelism combinations reduce throughput by up to
+2× even with high-bandwidth NVLink. On PCIe-only hardware
+as in our dual K4200 setup this effect is far more severe, as
+our prefill degradation experiments confirm (Section IV-F).
+III. SYSTEMDESIGN
+A. Hardware Configurat
+
+[7] ressure late in long
+generation runs.
+E. VRAM Scheduler Behavior
+All fifteen scheduling decisions routed embeddings to GPU
+(Table IV, Figs. 4–5). Both cards maintained free VRAM well
+above the 800 MB threshold throughout. Zero OOM events
+occurred. The CPU fallback provides a safety margin for
+deployments where display servers, browsers, or secondary
+applications share GPU 0 memory—a common scenario in
+institutional workstations that would otherwise produce silent
+OOM failures.
+F . Dual-GPU Layer Split
+Split
+
+[8] AG) pipelines are
+increasingly deployed for privacy-sensitive document intelligence
+in resource-constrained organizations. Existing RAG systems
+assume modern GPU hardware with FP16 acceleration, large
+VRAM, and stable inference throughput. This paper presents
+LegacyRAG, a VRAM-aware RAG pipeline for end-of-life GPU
+hardware abandoned by CUDA but still viable through the Vulkan
+compute API. We deploy LegacyRAG on a dual NVIDIA Quadro
+K4200 workstation (Maxwell architecture, 4 GB VRAM per card,
+compute capabi
+
+Question: What percentage of the total RAG pipeline latency is consumed by generation?
+Answer:

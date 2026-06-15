@@ -1,0 +1,404 @@
+LegacyRAG: A VRAM-Aware Retrieval-Augmented
+Generation
+Pipeline for Legacy Multi-GPU Inference via Vulkan
+Azeez Shaik
+Ying Wu College of Computing
+New Jersey Institute of Technology
+Newark, NJ, USA
+as4768@njit.edu
+Abstract—Retrieval-Augmented Generation (RAG) pipelines are
+increasingly deployed for privacy-sensitive document intelligence
+in resource-constrained organizations. Existing RAG systems
+assume modern GPU hardware with FP16 acceleration, large
+VRAM, and stable inference throughput. This paper presents
+LegacyRAG, a VRAM-aware RAG pipeline for end-of-life GPU
+hardware abandoned by CUDA but still viable through the Vulkan
+compute API. We deploy LegacyRAG on a dual NVIDIA Quadro
+K4200 workstation (Maxwell architecture, 4 GB VRAM per card,
+compute capability 3.0, dropped from CUDA 11.0 [2]) running a
+3.82 B parameter quantized language model [5] via the llama.cpp
+Vulkan backend [3]. A pre-operation VRAM scheduler queries
+both GPUs via nvidia-smi before every embedding operation
+and routes workloads to CPU or GPU based on live free-VRAM
+thresholds, preventing out-of-memory crashes under concurrent
+load. Empirical evaluation reveals that generation dominates
+RAG pipeline latency at 99.86%, sustained generation throughput
+ranges from 0.29 to 1.66 tok/s due to non-deterministic Vulkan
+behavior on legacy hardware, and naive dual-GPU layer splitting
+degrades prompt prefill by 50 × (from ∼26 to 0.52 tok/s) while
+leaving decode speed unchanged. The VRAM scheduler logged
+fifteen decisions with zero OOM events. LegacyRAG is released
+as open-source software to support reproducible research on
+constrained-hardware AI inference.
+Index Terms—edge computing, retrieval-augmented generation,
+legacy GPU inference, Vulkan compute, VRAM scheduling, onpremise AI, resource-constrained systems
+I. INTRODUCTION
+The commoditization of large language models (LLMs) has
+created strong demand for on-premise AI inference in privacysensitive domains such as municipal government, healthcare,
+and legal services. Organizations in these sectors cannot route
+document queries through cloud APIs due to data sovereignty
+requirements, yet rarely have the budget for modern GPU
+hardware [7]. This creates a deployment gap: institutions with
+genuine AI needs and existing legacy workstation infrastructure
+have no well-characterized path to local LLM deployment.
+This gap is compounded by a sharp ecosystem cliff in GPU
+software support. NVIDIA dropped compute capability 3.0
+(Kepler) from CUDA 11.0 in 2020 and removed all remaining
+Kepler support in CUDA 12.0 [2]. Cards such as the Quadro
+K4200 and GeForce GTX 750 Ti—common in institutional
+workstations from 2013–2016—are invisible to every modern
+LLM inference framework that depends on CUDA. The Mesa
+NVK project provides Vulkan 1.2 conformance for these
+cards [12], offering a GPU compute path without CUDA.
+RAG [1] further complicates deployment on legacy hardware
+because it requires two concurrent GPU workloads: an embedding model for document retrieval and a generation model for
+answer synthesis. On constrained hardware these workloads
+compete for VRAM, and naive co-scheduling causes out-ofmemory (OOM) crashes. Multi-GPU inference literature [9]
+shows that inter-device synchronization dominates throughput
+at low memory bandwidth, a finding our experiments confirm
+on Maxwell-class hardware.
+This paper makes four contributions:
+1) We demonstrate that Vulkan [4] provides a viable path to
+GPU-accelerated LLM inference on CUDA-abandoned
+hardware, achieving a 1.39 × generation speedup over
+CPU-only inference on the Quadro K4200.
+2) We design and implement LegacyRAG, a VRAM-aware
+RAG pipeline with a pre-operation scheduler that queries
+live GPU memory state and routes embedding workloads
+to prevent OOM conditions.
+3) We empirically characterize RAG pipeline performance
+on dual Maxwell GPUs via Vulkan, reporting generation
+throughput variance, full latency breakdown, and multiGPU split behavior under PCIe-only interconnect [9].
+4) We show that dual-GPU Vulkan layer splitting is counterproductive on Maxwell hardware without NVLink,
+degrading prefill 50× due to inter-device synchronization
+overhead.
+LegacyRAG is publicly available at https://github.com/
+azeez-1904/LegacyRAG.
+II. BACKGROUND ANDRELATEDWORK
+A. Retrieval-Augmented Generation
+Lewiset al.[1] introduced RAG as a framework augmenting
+generative models with a retrieval component. A standard RAG
+pipeline consists of: (1) document ingestion with chunking and
+embedding, (2) vector similarity retrieval, and (3) contextconditioned generation. Embedding models (100–500 MB)
+
+benefit from batched GPU execution, while generation models
+(2–70 GB) require sustained VRAM throughout inference. On
+VRAM-limited hardware these requirements create a scheduling
+conflict that LegacyRAG addresses.
+B. LLM Quantization for Constrained Hardware
+Frantaret al.[10] introduced GPTQ, an accurate one-shot
+post-training quantization method enabling 7B+ models in
+under 4 GB VRAM. Linet al.extended this with AWQ [11],
+the MLSys 2024 Best Paper, demonstrating 4-bit deployment on
+edge devices with minimal accuracy degradation. LegacyRAG
+uses GGUF Q4 0 quantization in llama.cpp [3], reducing phi3mini [5] from∼7 GB FP16 to 2.03 GiB.
+C. Edge and On-Premise LLM Inference
+Zhouet al.[7] characterize the “last mile” of AI deployment, showing edge inference is essential for latency-sensitive
+and privacy-sensitive workloads. Recent work on on-device
+inference [8] demonstrates speculative decoding for mobile
+hardware, but assumes compute capability ≥6.0 (Pascal) and
+does not address CUDA-abandoned Maxwell cards. To our
+knowledge, no prior published work has characterized full RAG
+pipeline performance on Maxwell-era hardware via Vulkan.
+D. Multi-GPU Parallelism and Communication Overhead
+Narayananet al.[9] showed that sub-optimal tensor and
+pipeline parallelism combinations reduce throughput by up to
+2× even with high-bandwidth NVLink. On PCIe-only hardware
+as in our dual K4200 setup this effect is far more severe, as
+our prefill degradation experiments confirm (Section IV-F).
+III. SYSTEMDESIGN
+A. Hardware Configuration
+Table I summarizes the test platform. Each Quadro K4200
+(Maxwell GM204, 2014) provides 1,344 CUDA cores and
+4 GB GDDR5 at 173 GB/s. At Vulkan initialization, both
+cards report fp16: 0 , int dot: 0 , and matrix cores:
+none. The host CPU is an Intel Xeon E5-1620 v3 (Haswell, 4
+cores / 8 threads, 3.50 GHz base, 3.60 GHz max turbo, 10 MB
+L3 cache). Both K4200s occupy PCIe 3.0 x16 slots on the
+Dell Precision Tower 5810 motherboard.
+B. Architecture Overview
+LegacyRAG is a FastAPI service exposing POST /ingest
+and POST /query endpoints. Ingest chunks input documents
+into 512-character overlapping windows (64-character stride),
+embeds each chunk via the VRAM-aware scheduler, and stores
+normalized 768-dimensional vectors to a persistent NumPy
+store. Query embeds the question using nomic-embed-text [6],
+retrieves top-k chunks by cosine similarity, and generates an
+answer via the local llama.cpp server [3]. Fig. 1 shows the
+pipeline.
+TABLE I
+HARDWARE ANDSOFTWARECONFIGURATION
+Component Specification
+GPU (×2) NVIDIA Quadro K4200
+VRAM per GPU 4 GB GDDR5 (173 GB/s)
+GPU architecture Maxwell GM204, 2014
+Compute cap. 3.0 (dropped CUDA 11.0 [2])
+Vulkan support 1.2 (no FP16, no int dot)
+CPU Intel Xeon E5-1620 v3, 4C/8T, 3.50 GHz
+PCIe slots 2×PCIe 3.0 x16
+Host OS Ubuntu 24.04
+LLM server llama.cpp b5576 [3], Vulkan
+LLM model Phi-3-Mini [5] (3.82 B, Q4 0)
+Embedding model nomic-embed-text [6] (274 MB)
+VRAM threshold 800 MB free (per GPU)
+POST /query
+|
++-> vram_scheduler -> nvidia-smi (both GPUs)
+| |
+| +- GPU free? -> embedder -> Ollama:11434
+| +- busy/low? -> CPU embedding
+|
++-> retriever -> cosine similarity (numpy)
+|
++-> generator -> llama-server:8080 (Vulkan)
+|
++- streaming + two-phase stall detection
++- auto-retry with context reduction
+Fig. 1. LegacyRAG pipeline and VRAM-aware routing logic.
+C. VRAM Scheduler
+The VRAM scheduler is the core contribution of LegacyRAG.
+Before every embedding operation it runs:
+nvidia-smi --query-gpu=index,memory.free
+--format=csv,noheader
+and routes by the following policy:
+1) If any GPU reports free VRAM below Tvram (default:
+800 MB), route to CPU.
+2) If a GenerationContext lock is active (generation
+in progress), route to CPU regardless of VRAM state.
+3) Otherwise, route to GPU.
+Every decision is timestamped and appended
+to schedule_decisions.jsonl. The
+GenerationContext is a thread-safe counter that
+prevents the embedding model [6] ( ≈280 MB peak) from
+competing with active generation for VRAM. The threshold
+Tvram = 800 MB was selected empirically. With phi3-mini
+occupying ≈2.1 GB and the KV cache allocating up to 1.5 GB,
+GPU 0 maintains 1,400–1,550 MB free and GPU 1 maintains
+≈1,994 MB free under normal load, providing ≈600 MB
+margin above the embedding model’s peak.
+D. Generation Backend
+The generation component posts to the llama.cpp server [3]
+via its OpenAI-compatible /v1/chat/completions endpoint. Phi-3-Mini [5] (3.82 B params, GGUF Q4 0 [10],
+
+TABLE II
+CPU-ONLY VS. SINGLE-GPU VULKAN(PHI3-MINI, 10-TOKEN RESPONSE)
+Metric CPU Only GPU Vulkan
+Prompt eval (tok/s) 21.14 8.85
+Generation (tok/s) 6.52 9.07
+Speedup (generation) 1.00×1.39×
+Model load time (s) 0.044 1.954
+Fig. 2. RAG request latency breakdown. Generation dominates at 99.86% of
+total latency across all three single-GPU requests. The dual-GPU bar (purple,
+264 s) shows lower total latency but at the cost of 50 × prefill degradation
+(Section IV-F).
+2.03 GiB) is loaded with all 33 layers offloaded to Vulkan [4]
+(-ngl 99 ). The generator implements two-phase stall detection: a 600 s first-token timeout and a 45 s inter-token timeout,
+with progressively reduced context on retry.
+IV. EVALUATION
+A. Experimental Setup
+Experiments ran on a Dell Precision Tower 5810 (Ubuntu
+24.04) with an Intel Xeon E5-1620 v3 (4 cores, 8 threads,
+3.50 GHz) and dual K4200s in PCIe 3.0 x16 slots. The
+llama.cpp server [3] (b5576) used the official Vulkan binary.
+The test corpus was a five-chunk public records policy document (≈2,500 tokens). All queries used a 459-token prompt
+with 512 maximum completion tokens.
+B. CPU-Only vs. Single-GPU Vulkan
+GPU Vulkan achieves a 1.39 × generation speedup (9.07
+vs. 6.52 tok/s). Prompt evaluation is slower on GPU (8.85 vs.
+21.14 tok/s) because the K4200’s lack of FP16 and integer
+dot-product instructions forces FP32 fallback in the Vulkan
+backend [4]. Autoregressive decode benefits from GPU memory
+bandwidth (173 GB/s vs. ≈45 GB/s dual-channel DDR4 on the
+E5-1620 v3), explaining the generation speedup.
+C. RAG Pipeline Benchmark
+Fig. 2 and Table III show end-to-end RAG latency for three
+sequential requests following the architecture of Lewiset al.[1].
+Generation accounts for 99.86% of total pipeline latency;
+embedding 0.14%; retrieval <0.001%. Any acceleration of
+embedding or retrieval—including the quantization gains of
+TABLE III
+LEGACYRAG PIPELINELATENCY(SEQUENTIAL, SINGLEGPU VULKAN)
+Req. Emb.(s) Ret.(s) Gen.(s) Total(s) tok/s
+1 0.625 0.0002 575.25 575.89 0.89
+2 0.835 0.0002 307.68 308.53 1.66
+3 0.511 0.0001 525.23 525.76 0.29
+Mean 0.657 0.0002 469.39 470.06 0.95
+Fig. 3. Generation throughput. Left: decode tok/s across all four configurations.
+Right: prefill tok/s showing the 50 × degradation under dual-GPU layer split.
+High variance across single-GPU sustained requests (Req 1–3) reflects thermal
+and Vulkan state effects.
+GPTQ [10] and AWQ [11]—produces negligible end-to-end
+improvement when generation latency is this dominant.
+D. Generation Throughput Variance
+Three identical sequential requests produced 0.89, 1.66,
+and 0.29 tok/s—a 5.7 × range (Fig. 3). Three mechanisms
+contribute:
+Thermal throttling.Maxwell does not expose GPU frequency monitoring through Vulkan [4], making throttle events
+silent. Request 3 (0.29 tok/s, 525 s for 150 tokens) exhibited
+substantially lower throughput under nominally identical conditions, consistent with thermal onset.
+Queue-induced warm-up.Request 2 (1.66 tok/s) followed
+Request 1 immediately, benefiting from residual warm VRAM
+caches and pre-compiled Vulkan shader pipelines. Cold-start
+requests (1 and 3) were slower.
+KV cache pressure.The KV cache grows within the fixed
+4 GB VRAM budget, increasing memory pressure late in long
+generation runs.
+E. VRAM Scheduler Behavior
+All fifteen scheduling decisions routed embeddings to GPU
+(Table IV, Figs. 4–5). Both cards maintained free VRAM well
+above the 800 MB threshold throughout. Zero OOM events
+occurred. The CPU fallback provides a safety margin for
+deployments where display servers, browsers, or secondary
+applications share GPU 0 memory—a common scenario in
+institutional workstations that would otherwise produce silent
+OOM failures.
+F . Dual-GPU Layer Split
+Splitting phi3-mini’s 32 layers across both K4200s via
+llama.cpp’s --split-mode layer --tensor-split
+
+TABLE IV
+VRAM SCHEDULERDECISIONLOG(15 DECISIONS)
+Decision Type Count %
+GPU routing 15 100.0
+CPU (VRAM< Tvram) 0 0.0
+CPU (generation active) 0 0.0
+OOM events 0 0.0
+Min. free VRAM GPU 0 1,409 MB
+Min. free VRAM GPU 1 1,993 MB
+ThresholdT vram 800 MB
+Fig. 4. VRAM scheduler behavior. Left: 100% GPU routing (pie chart). Right:
+per-GPU free VRAM at each decision with the 800 MB threshold (dashed
+red) and safe zone (green). GPU 0 fluctuates with load; GPU 1 stays near
+2,000 MB throughout.
+1,1 [3] degrades prefill from ∼26 to 0.52 tok/s (50 × slower)
+while decode remains essentially unchanged (9 →8.35 tok/s, Table V). This asymmetry matches the communication-overhead
+analysis of Narayananet al.[9]: during prefill, all prompt
+tokens are processed simultaneously and every transformer
+layer crossing the inter-GPU boundary requires a Vulkan
+pipeline barrier, multiplied by the full prompt length. During
+decode, a single token is generated per step and the per-step
+synchronization cost is amortized. Unlike NVLink-connected
+clusters [9], the PCIe 3.0 bus between the two K4200s has
+insufficient bandwidth to amortize multi-layer barrier overhead
+at prefill scale.
+Three simultaneous requests all failed with first-token
+timeouts (600 s each, batch wall time 1,800 s). With llama.cpp
+serializing requests through a single inference slot [3] and each
+generation taking 308–575 s, concurrent operation is infeasible
+on this hardware. Single-GPU inference with CPU embedding
+offload via the VRAM scheduler is the optimal configuration.
+V. DISCUSSION
+A. Practical Deployment Envelope
+Single-user sequential workloads with 308–575 s end-to-end
+latency are feasible for asynchronous use cases such as batch
+document processing and low-frequency queries in institutional
+settings [7]. The total hardware cost for this deployment is
+approximately $200–$300 for a used Dell Precision Tower
+5810 with dual K4200s on the secondary market, with zero
+per-query API cost and no data egress for sensitive documents.
+Fig. 5. Per-GPU free VRAM before and after each request. GPU 0 carries the
+inference load; GPU 1 remains near-full. All values stay above the 800 MB
+threshold (dashed red).
+TABLE V
+PERFORMANCECEILING BYCONFIGURATION
+Config Prefill Decode Max
+(tok/s) (tok/s)Conc.
+Single GPU
+(idle)
+∼26∼9 1
+Single GPU (sustained)
+1–6 0.29–1.66 1
+Dual GPU (idle)0.528.35 1
+Dual GPU (concurrent)
+N/A N/A0
+B. Value of VRAM-Aware Scheduling
+The CPU fallback path was not triggered in our experiments
+because VRAM stayed above threshold throughout. Its value is
+preventive: in institutional deployments where display servers
+and browser processes share GPU 0, available VRAM can
+drop by several hundred megabytes, bringing it toward the
+800 MB threshold. Without the GenerationContext guard,
+a concurrent embedding request during active generation could
+consume the ≈280 MB needed by nomic-embed-text [6] and
+cause a mid-generation OOM crash.
+C. Vulkan as a Long-Term Path
+The NVIDIA 470 driver providing Vulkan 1.2 on the
+K4200 was declared end-of-life in September 2024. The Mesa
+NVK driver [12] provides an actively maintained open-source
+alternative with Vulkan 1.2 conformance for Kepler and later
+GPUs. LegacyRAG is driver-agnostic and functions with NVK,
+extending the viable service life of this hardware class.
+D. Limitations
+Three requests with a single prompt type are insufficient for
+robust statistical characterization of throughput variance; future
+work should use ≥50 requests with varied prompt lengths. The
+test corpus (five chunks, ≈2,500 tokens) does not evaluate
+retrieval at scale. The CPU fallback path’s latency impact
+was not measured because the threshold was never breached.
+Results are specific to the K4200; cards with different VRAM
+(e.g., K5200 with 8 GB) may differ materially.
+
+VI. CONCLUSION
+LegacyRAG demonstrates that practical LLM document
+intelligence is achievable on CUDA-abandoned Maxwell
+hardware via Vulkan [4]. By pairing the llama.cpp Vulkan
+backend [3] with a pre-operation VRAM scheduler and a
+GenerationContext guard, the system achieves GPUaccelerated RAG [1] on dual Quadro K4200s with zero OOM
+events.
+Key findings: Vulkan delivers a 1.39 × generation speedup
+over the E5-1620 v3 CPU baseline; generation dominates RAG
+latency at 99.86%, making embedding and retrieval optimization largely irrelevant for this hardware class; throughput is
+non-deterministic (0.29–1.66 tok/s) under sustained load due to
+silent thermal throttling; dual-GPU layer splitting degrades prefill by 50 × due to PCIe-bound Vulkan barrier overhead [9]. A
+usable private RAG deployment is achievable for ≈$200–$300
+in used hardware. Full code, benchmark data, and scheduler
+logs are at https://github.com/azeez-1904/LegacyRAG.
+ACKNOWLEDGMENT
+The author thanks the llama.cpp open-source community
+for maintaining Vulkan backend support for legacy GPU
+architectures.
+REFERENCES
+[1] P. Lewis, E. Perez, A. Piktus, F. Petroni, V . Karpukhin, N. Goyal,
+H. K ¨uttler, M. Lewis, W.-t. Yih, T. Rockt ¨aschel, S. Riedel, and
+D. Kiela, “Retrieval-augmented generation for knowledge-intensive
+NLP tasks,” inAdv. Neural Inf. Process. Syst. 33 (NeurIPS 2020),
+H. Larochelleet al., Eds. Curran Associates, 2020, pp. 9459–
+9474. [Online]. Available: https://proceedings.neurips.cc/paper/2020/hash/
+6b493230205f780e1bc26945df7481e5-Abstract.html
+[2] NVIDIA Corporation, “CUDA Toolkit 11.0 Release Notes,” Tech. Doc.,
+Jul. 2020. [Online]. Available: https://docs.nvidia.com/cuda/archive/11.0/
+cuda-toolkit-release-notes/
+[3] G. Gerganovet al., “llama.cpp: LLM inference in C/C++,” GitHub
+repository, 2023. [Online]. Available: https://github.com/ggml-org/llama.
+cpp
+[4] Khronos Vulkan Working Group,Vulkan 1.3 Specification, J. Leech
+and T. Hector, Eds., The Khronos Group, 2022. [Online]. Available:
+https://registry.khronos.org/vulkan/specs/1.3/html/
+[5] M. Abdin, S. A. Jacobs, A. A. Awan, J. Aneja, A. Awadallahet al., “Phi-3
+technical report: A highly capable language model locally on your phone,”
+arXiv preprint, arXiv:2404.14219, 2024, doi: 10.48550/arXiv.2404.14219.
+[6] Z. Nussbaum, J. X. Morris, B. Duderstadt, and A. Mulyar, “Nomic
+embed: Training a reproducible long context text embedder,”arXiv
+preprint, arXiv:2402.01613, 2024, doi: 10.48550/arXiv.2402.01613.
+[7] Z. Zhou, X. Chen, E. Li, L. Zeng, K. Luo, and J. Zhang, “Edge
+intelligence: Paving the last mile of artificial intelligence with edge
+computing,”Proc. IEEE, vol. 107, no. 8, pp. 1738–1762, Aug. 2019,
+doi: 10.1109/JPROC.2019.2918951.
+[8] “EdgeLLM: Fast on-device LLM inference with speculative decoding,”IEEE Trans. Mobile Comput., vol. 24, no. 4, 2025, doi:
+10.1109/TMC.2024.3513457.
+[9] D. Narayanan, M. Shoeybi, J. Casper, P. LeGresley, M. Patwary, V . A.
+Korthikanti, D. Vainbrand, P. Kashinkunti, J. Bernauer, B. Catanzaro,
+A. Phanishayee, and M. Zaharia, “Efficient large-scale language model
+training on GPU clusters using Megatron-LM,” inProc. SC ’21, Nov.
+2021, pp. 1–15, doi: 10.1145/3458817.3476209.
+[10] E. Frantar, S. Ashkboos, T. Hoefler, and D. Alistarh, “GPTQ: Accurate
+post-training quantization for generative pre-trained transformers,” in
+Proc. ICLR 2023, 2023, doi: 10.48550/arXiv.2210.17323.
+[11] J. Lin, J. Tang, H. Tang, S. Yang, W.-M. Chen, W.-C. Wang, G. Xiao, X.
+Dang, C. Gan, and S. Han, “AWQ: Activation-aware weight quantization
+for on-device LLM compression and acceleration,” inProc. MLSys 2024,
+May 2024.
+[12] F. Ekstrand, “Introducing NVK, a brand new open-source Vulkan driver
+for NVIDIA hardware in Mesa,” Collabora Ltd., Oct. 2023. [Online].
+Available: https://www.collabora.com/news-and-blog/news-and-events/
+introducing-nvk.html

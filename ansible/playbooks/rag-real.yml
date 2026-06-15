@@ -1,0 +1,200 @@
+---
+# kv4 REALISTIC-RAG ARM (register E1) — de-confounds the pathological
+# repeated-sentence fixture by retrieving over a REAL document (Shaik 2025
+# LegacyRAG paper) with Shaik's own pipeline: nomic-embed-text 768-d vectors,
+# brute-force cosine top-k. Then measures f16-vs-turbo4 generation with a task
+# accuracy, repetition, and spec-preservation probe on diverse context.
+#
+#   A  retrieval (Ollama nomic-embed-text)  -- NOT timed; ollama up
+#   B  preflight (stop ollama, lock clocks, sole-tenant)
+#   C  generation  kv{f16,turbo4} x spec{off,ngram-cache}, all questions/config
+#   Z  reset clocks + restart ollama + fetch
+#
+# Run:  ansible-playbook playbooks/kv4-rag-real.yml
+
+- name: kv4-rag-real Phase A — retrieval (mirror Shaik via nomic-embed-text)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-rag-evidence-{{ model_tag | default('qwen3-1.7b') }}"
+    src_dir: "{{ playbook_dir }}/../gpu/docs/validation/kv4/rag-real"
+  tasks:
+    - name: Scrub + recreate evidence tree on {{ work_dir }}
+      become: true
+      ansible.builtin.shell: |
+        rm -rf {{ evidence_dir }}
+        mkdir -p {{ evidence_dir }}/prompts {{ evidence_dir }}/results {{ evidence_dir }}/gpu-telemetry
+        chown -R {{ ansible_user }}:{{ ansible_user }} {{ evidence_dir }}
+      changed_when: true
+
+    - name: Stage corpus + questions + scripts
+      ansible.builtin.copy:
+        src: "{{ src_dir }}/{{ item }}"
+        dest: "{{ evidence_dir }}/{{ item }}"
+        mode: "0644"
+      loop:
+        - shaik-corpus.txt
+        - questions.json
+        - rag_retrieve.py
+        - rag_gen_client.py
+
+    - name: Ensure Ollama is up (Shaik embeds via Ollama)
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: started}
+
+    - name: Retrieve top-k chunks per question (nomic-embed-text 768-d cosine)
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        python3 rag_retrieve.py shaik-corpus.txt questions.json . http://127.0.0.1:11434 8 \
+          > retrieval.log 2>&1
+        tail -20 retrieval.log
+      register: retrieval
+      changed_when: true
+
+    - name: Retrieval summary
+      ansible.builtin.debug:
+        var: retrieval.stdout_lines
+
+- name: kv4-rag-real Phase B — preflight (timed-generation prep)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  tasks:
+    - name: Persistence on
+      become: true
+      ansible.builtin.command: nvidia-smi -pm 1
+      changed_when: false
+
+    - name: Clean slate by port
+      become: true
+      ansible.builtin.shell: |
+        for p in 11438 11439; do fuser -k ${p}/tcp 2>/dev/null || true; done
+        sleep 2; exit 0
+      changed_when: false
+
+    - name: Stop Ollama (free GPU for sole-tenant timed generation)
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: stopped}
+
+    - name: Sole-tenant assert
+      ansible.builtin.shell: nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader
+      register: compute_apps
+      changed_when: false
+      failed_when: compute_apps.stdout | trim | length > 0
+
+    - name: Lock clocks to TDP
+      become: true
+      ansible.builtin.command: nvidia-smi --lock-gpu-clocks=tdp
+      changed_when: true
+
+- name: kv4-rag-real Phase C — generation (kv x spec, all questions/config)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-rag-evidence-{{ model_tag | default('qwen3-1.7b') }}"
+    cuda_lib: /usr/local/cuda/lib64
+    server_bin: "{{ llama_bin_dir }}/llama-server"
+    server_port: 11439
+    model_file: "{{ model_file | default('qwen3-1.7b.gguf') }}"
+    sidecar_query: timestamp,utilization.gpu,utilization.memory,memory.used,power.draw,temperature.gpu,clocks.current.sm,clocks.current.memory,pstate
+    n_predict: 128
+    gen_configs:
+      - {cond: "rag__kvf16__specoff",     kv: f16,    spec: "off"}
+      - {cond: "rag__kvf16__specngram",   kv: f16,    spec: "ngram"}
+      - {cond: "rag__kvturbo4__specoff",   kv: turbo4, spec: "off"}
+      - {cond: "rag__kvturbo4__specngram", kv: turbo4, spec: "ngram"}
+  tasks:
+    - name: Per-config server + client over all questions; OOM-tolerant
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        SPECARGS=""
+        if [ "{{ item.spec }}" = "ngram" ]; then SPECARGS="--spec-type ngram-cache"; fi
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        nvidia-smi --query-gpu={{ sidecar_query }} --format=csv,noheader,nounits -lms 1000 \
+          > gpu-telemetry/$COND.csv 2>/dev/null &
+        SPID=$!
+        nohup env LD_LIBRARY_PATH={{ cuda_lib }} {{ server_bin }} \
+          -m {{ model_dir }}/{{ model_file }} -ngl 99 -fa 1 \
+          --cache-type-k {{ item.kv }} --cache-type-v {{ item.kv }} \
+          -c 4096 -np 1 --cont-batching $SPECARGS \
+          --host 0.0.0.0 --port {{ server_port }} \
+          > results/$COND.server.log 2>&1 &
+        SRV=$!
+        HEALTH="down"
+        for i in $(seq 1 90); do
+          if ! kill -0 $SRV 2>/dev/null; then
+            echo "server pid $SRV exited before health (OOM/crash)" >> results/$COND.server.log
+            HEALTH="oom"; break
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:{{ server_port }}/health 2>/dev/null || true)
+          [ "$code" = "200" ] && { HEALTH="up"; break; }
+          sleep 2
+        done
+        echo "health=$HEALTH" >> results/$COND.server.log
+        if [ "$HEALTH" = "up" ]; then
+          python3 rag_gen_client.py http://127.0.0.1:{{ server_port }}/completion \
+            prompts retrieval_manifest.json results/$COND.json {{ n_predict }} \
+            > results/$COND.client.log 2>&1 || true
+        else
+          echo "[]" > results/$COND.json
+        fi
+        kill -9 $SRV 2>/dev/null || true
+        kill $SPID 2>/dev/null || true
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2; exit 0
+      loop: "{{ gen_configs }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: gen_runs
+      changed_when: true
+      failed_when: false
+
+    - name: Per-config decode summary
+      ansible.builtin.shell: "cat {{ evidence_dir }}/results/{{ item.cond }}.client.log 2>/dev/null || echo missing"
+      loop: "{{ gen_configs }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: gen_tails
+      changed_when: false
+
+    - name: Generation results
+      ansible.builtin.debug:
+        var: gen_tails.results | map(attribute='stdout') | list
+
+- name: kv4-rag-real Phase Z — reset clocks + restart ollama + fetch
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-rag-evidence-{{ model_tag | default('qwen3-1.7b') }}"
+  tasks:
+    - name: Reset GPU clocks
+      become: true
+      ansible.builtin.command: nvidia-smi --reset-gpu-clocks
+      changed_when: true
+      ignore_errors: true
+
+    - name: Restart Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: started}
+      ignore_errors: true
+
+    - name: Ensure controller evidence dir exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/evidence/kv4-rag-real-{{ model_tag | default('qwen3-1.7b') }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Fetch evidence
+      ansible.posix.synchronize:
+        src: "{{ evidence_dir }}/"
+        dest: "{{ playbook_dir }}/evidence/kv4-rag-real-{{ model_tag | default('qwen3-1.7b') }}/"
+        mode: pull
+        recursive: true
+
+    - name: Done
+      ansible.builtin.debug:
+        msg: "kv4 realistic-RAG arm complete. Evidence: ./evidence/kv4-rag-real-{{ model_tag | default('qwen3-1.7b') }}/"

@@ -1,0 +1,5 @@
+vram__qwen3-1.7b__kvf16__c8192 peak_line=2026/06/13 21:04:58.132, 2426
+vram__qwen3-1.7b__kvturbo4__c8192 peak_line=2026/06/13 21:05:06.772, 1750
+vram__qwen3-1.7b__kvf16__c32768 peak_line=2026/06/13 21:05:12.720, 72
+vram__qwen3-1.7b__kvturbo4__c32768 peak_line=2026/06/13 21:08:23.414, 2464
+vram__qwen3-1.7b__kvturbo4__c65536 peak_line=2026/06/13 21:08:32.224, 3416

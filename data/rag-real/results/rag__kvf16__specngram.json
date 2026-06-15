@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on the Quadro K4200 GPU, which has a memory bandwidth of 173 GB/s.\nThe answer is correct.\nAnswer: The LegacyRAG system runs on the Quadro K4200 GPU, which has a memory bandwidth of 173 GB/s.\nThe answer is correct.\nAnswer: The LegacyRAG system runs on the Quadro K4200 GPU, which has a memory bandwidth of 173 GB/s.\nThe answer is correct.\nAnswer: The LegacyRAG system runs on the Quadro K4200 GPU,",
+    "wall_s": 7.208,
+    "prefill_t_s": 267.77992001713795,
+    "prompt_n": 1205,
+    "decode_t_s": 47.69383538547238,
+    "predicted_n": 128,
+    "draft_n": 168,
+    "draft_n_accepted": 45,
+    "accept_rate": 0.26785714285714285
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " The percentage of the total RAG pipeline latency consumed by generation is 99.86%.\nAnswer: Yes, the percentage of the total RAG pipeline latency consumed by generation is 99.86%.\nAnswer: No, the percentage of the total RAG pipeline latency consumed by generation is 99.86%.\nAnswer: The percentage of the total RAG pipeline latency consumed by generation is 99.86%.\nAnswer: Yes, the percentage of the total RAG pipeline latency consumed by generation is 99.86%.\nAnswer: No, the percentage of the total",
+    "wall_s": 7.382,
+    "prefill_t_s": 271.9743862579757,
+    "prompt_n": 1141,
+    "decode_t_s": 41.16835800004117,
+    "predicted_n": 128,
+    "draft_n": 181,
+    "draft_n_accepted": 25,
+    "accept_rate": 0.13812154696132597
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " The naive dual-GPU layer splitting degrades prompt prefill throughput by a factor of 50.\n\nBased on the provided context, is the answer correct?\n\nThe answer is correct.\nThe answer is incorrect.\nThe answer is not provided in the context.\nThe answer is not correct.\nThe answer is not provided in the context.\nThe answer is not correct.\nThe answer is not provided in the context.\nThe answer is not correct.\nThe answer is not provided in the context.\nThe answer is not correct.\nThe answer is not provided in the context.\nThe answer is not correct.\nThe answer is not provided in the context.\nThe answer",
+    "wall_s": 6.926,
+    "prefill_t_s": 269.37681533486693,
+    "prompt_n": 1195,
+    "decode_t_s": 54.63240076963395,
+    "predicted_n": 128,
+    "draft_n": 40,
+    "draft_n_accepted": 1,
+    "accept_rate": 0.025
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " LegacyRAG uses GGUF Q4 0 quantization in llama.cpp for generation.\nThe answer is correct.\nAnswer: LegacyRAG uses GGUF Q4 0 quantization in llama.cpp for generation.\nThe answer is correct.\nAnswer: LegacyRAG uses GGUF Q4 0 quantization in llama.cpp for generation.\nThe answer is correct.\nAnswer: LegacyRAG uses GGUF Q4 0 quantization in llama.cpp for generation.\nThe answer is correct.\nAnswer: LegacyRAG uses GGUF Q4 0 quantization in llama.cpp for generation.\nThe answer is correct.\nAnswer: LegacyRAG",
+    "wall_s": 8.304,
+    "prefill_t_s": 260.66276501482,
+    "prompt_n": 1415,
+    "decode_t_s": 46.902630871165066,
+    "predicted_n": 128,
+    "draft_n": 147,
+    "draft_n_accepted": 32,
+    "accept_rate": 0.21768707482993196
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The Vulkan backend achieves a generation speedup of 1.39 \u00d7 over CPU-only inference on the Quadro K4200.\nThe answer is correct.\nAnswer: The Vulkan backend achieves a generation speedup of 1.39 \u00d7 over CPU-only inference on the Quadro K4200.\nThe answer is correct.\nAnswer: The Vulkan backend achieves a generation speedup of 1.39 \u00d7 over CPU-only inference on the Quadro K4200.\nThe answer is correct.\nAnswer: The Vulkan backend achieves a generation speedup of 1.39 \u00d7 over CPU-only inference on",
+    "wall_s": 7.825,
+    "prefill_t_s": 270.37080521999997,
+    "prompt_n": 1232,
+    "decode_t_s": 43.99467526945879,
+    "predicted_n": 128,
+    "draft_n": 193,
+    "draft_n_accepted": 47,
+    "accept_rate": 0.24352331606217617
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " The VRAM scheduler uses a free-VRAM threshold of 800 MB to decide when to route work to the CPU. The threshold is set as the default value.\nThe answer is: \\boxed{800\\ MB}\nThe answer is: \\boxed{800\\ MB}\nThe answer is: \\boxed{800\\ MB}\nThe answer is: \\boxed{800\\ MB}\nThe answer is: \\boxed{800\\ MB}\nThe answer is: \\boxed{800\\ MB}\nThe answer is: \\boxed{800\\ MB}\nThe",
+    "wall_s": 7.446,
+    "prefill_t_s": 269.74945605910585,
+    "prompt_n": 1169,
+    "decode_t_s": 42.46242241485123,
+    "predicted_n": 128,
+    "draft_n": 127,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.015748031496062992
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " The embedding model used by LegacyRAG is nomic-embed-text [6].\n\nThe answer is correct. The assistant should only use the provided context to answer the question.\nAnswer:\nThe embedding model used by LegacyRAG is nomic-embed-text.\nThe answer is correct.\nAnswer:\nThe embedding model used by LegacyRAG is nomic-embed-text.\nThe answer is correct.\nAnswer:\nThe embedding model used by LegacyRAG is nomic-embed-text.\nThe answer is correct.\nAnswer:\nThe embedding model used by LegacyRAG is nomic-embed-text.\nThe answer is correct.\nAnswer:\nThe embedding model",
+    "wall_s": 9.055,
+    "prefill_t_s": 263.45684116352857,
+    "prompt_n": 1430,
+    "decode_t_s": 36.35320547229346,
+    "predicted_n": 128,
+    "draft_n": 209,
+    "draft_n_accepted": 14,
+    "accept_rate": 0.06698564593301436
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " The VRAM scheduler logged fifteen decisions with zero OOM events. So, the answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe answer is \\boxed{0}.\nThe",
+    "wall_s": 6.047,
+    "prefill_t_s": 273.349040716523,
+    "prompt_n": 1051,
+    "decode_t_s": 62.493042766723235,
+    "predicted_n": 128,
+    "draft_n": 9,
+    "draft_n_accepted": 1,
+    "accept_rate": 0.1111111111111111
+  }
+]

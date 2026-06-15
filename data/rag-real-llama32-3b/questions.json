@@ -1,0 +1,13 @@
+{
+  "_doc": "Extractive QA over the Shaik (2025) LegacyRAG paper as the RAG corpus. Each question's answer is spread across the document (not one repeated sentence), de-confounding the pathological-fixture issue (register V1). gold = list of acceptable substrings (case-insensitive); answer counts correct if ANY gold appears in the generation.",
+  "questions": [
+    {"id": "q1_gpu_bw",     "q": "What GPU does the LegacyRAG system run on, and what is that GPU's memory bandwidth?", "gold": ["173 GB/s", "173"]},
+    {"id": "q2_gen_pct",    "q": "What percentage of the total RAG pipeline latency is consumed by generation?", "gold": ["99.86"]},
+    {"id": "q3_prefill",    "q": "By what factor does naive dual-GPU layer splitting degrade prompt prefill throughput?", "gold": ["50x", "50×", "50 times", "50-fold", "50"]},
+    {"id": "q4_model",      "q": "Which language model and quantization format does LegacyRAG use for generation?", "gold": ["Phi-3", "Q4_0", "Q4 0", "Q4"]},
+    {"id": "q5_speedup",    "q": "What generation speedup does the Vulkan backend achieve over CPU-only inference?", "gold": ["1.39"]},
+    {"id": "q6_threshold",  "q": "What free-VRAM threshold does the scheduler use to decide when to route work to the CPU?", "gold": ["800 MB", "800"]},
+    {"id": "q7_embed",      "q": "Which embedding model does LegacyRAG use to embed document chunks?", "gold": ["nomic-embed-text", "nomic"]},
+    {"id": "q8_oom",        "q": "How many out-of-memory events occurred during the scheduler evaluation?", "gold": ["zero", "0 OOM", "no OOM", "none"]}
+  ]
+}

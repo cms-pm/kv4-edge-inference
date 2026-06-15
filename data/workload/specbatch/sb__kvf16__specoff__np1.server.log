@@ -1,0 +1,67 @@
+0.00.058.205 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.058.214 I device_info:
+0.00.294.952 I   - CUDA0   : NVIDIA GeForce GTX 1650 (3709 MiB, 3637 MiB free)
+0.00.294.984 I   - CPU     : QEMU Virtual CPU version 2.5+ (17923 MiB, 17923 MiB free)
+0.00.295.128 I system_info: n_threads = 6 (n_threads_batch = 6) / 6 | CUDA : ARCHS = 750 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | CPU : SSE3 = 1 | SSSE3 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.295.199 I srv          init: running without SSL
+0.00.295.292 I srv          init: using 5 threads for HTTP server
+0.00.295.536 I srv         start: binding port with default address family
+0.00.296.860 I srv          main: loading model
+0.00.296.889 I srv    load_model: loading model '<model-dir>/qwen3-1.7b.gguf'
+0.00.297.003 I common_init_result: fitting params to device memory ...
+0.00.297.011 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.828.412 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.182.677 W llama_context: n_ctx_seq (8192) < n_ctx_train (40960) -- the full capacity of the model will not be utilized
+0.01.204.983 W common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.01.284.119 I srv    load_model: initializing slots, n_slots = 1
+0.01.310.399 W common_speculative_init: no implementations specified for speculative decoding
+0.01.310.407 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 8192
+0.01.310.548 I srv    load_model: prompt cache is enabled, size limit: 8192 MiB
+0.01.310.553 I srv    load_model: use `--cache-ram 0` to disable the prompt cache
+0.01.310.554 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.01.310.597 W srv          init: --cache-idle-slots requires --kv-unified, disabling
+0.01.321.259 I init: chat template, example_format: '<|im_start|>system
+You are a helpful assistant<|im_end|>
+<|im_start|>user
+Hello<|im_end|>
+<|im_start|>assistant
+Hi there<|im_end|>
+<|im_start|>user
+How are you?<|im_end|>
+<|im_start|>assistant
+'
+0.01.327.770 I srv          init: init: chat template, thinking = 1
+0.01.327.822 I srv          main: model loaded
+0.01.327.829 I srv          main: server is listening on http://0.0.0.0:11439
+0.01.327.857 I srv  update_slots: all slots are idle
+0.01.995.084 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.01.995.091 I srv  get_availabl: updating prompt cache
+0.01.995.113 I srv          load:  - looking for better prompt, base f_keep = -1.000, sim = 0.000
+0.01.995.116 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 8192 tokens, 8589934592 est)
+0.01.995.118 I srv  get_availabl: prompt cache update took 0.03 ms
+0.01.995.166 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.10.523.322 I slot print_timing: id  0 | task 0 | n_decoded =    100, tg =  58.77 t/s
+0.11.007.175 I slot print_timing: id  0 | task 0 | 
+prompt eval time =    6826.60 ms /  1777 tokens (    3.84 ms per token,   260.31 tokens per second)
+       eval time =    2185.36 ms /   128 tokens (   17.07 ms per token,    58.57 tokens per second)
+      total time =    9011.96 ms /  1905 tokens
+0.11.007.392 I slot      release: id  0 | task 0 | stop processing: n_tokens = 1904, truncated = 0
+0.11.007.411 I srv  update_slots: all slots are idle
+0.11.014.498 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+0.11.014.570 I slot launch_slot_: id  0 | task 129 | processing task, is_child = 0
+0.19.491.013 I slot print_timing: id  0 | task 129 | n_decoded =    100, tg =  58.74 t/s
+0.19.975.740 I slot print_timing: id  0 | task 129 | 
+prompt eval time =    6774.00 ms /  1777 tokens (    3.81 ms per token,   262.33 tokens per second)
+       eval time =    2187.14 ms /   128 tokens (   17.09 ms per token,    58.52 tokens per second)
+      total time =    8961.14 ms /  1905 tokens
+0.19.975.822 I slot      release: id  0 | task 129 | stop processing: n_tokens = 1904, truncated = 0
+0.19.975.840 I srv  update_slots: all slots are idle
+0.19.981.695 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+0.19.981.729 I slot launch_slot_: id  0 | task 258 | processing task, is_child = 0
+0.28.459.935 I slot print_timing: id  0 | task 258 | n_decoded =    100, tg =  58.67 t/s
+0.28.944.056 I slot print_timing: id  0 | task 258 | 
+prompt eval time =    6773.68 ms /  1777 tokens (    3.81 ms per token,   262.34 tokens per second)
+       eval time =    2188.61 ms /   128 tokens (   17.10 ms per token,    58.48 tokens per second)
+      total time =    8962.29 ms /  1905 tokens
+0.28.944.145 I slot      release: id  0 | task 258 | stop processing: n_tokens = 1904, truncated = 0
+0.28.944.154 I srv  update_slots: all slots are idle

@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on two Quadro K4200 (Maxwell GM204, 2014) GPUs, each with 1,344 CUDA cores and 4 GB GDDR5 at 173 GB/s. The GPUs report fp16: 0, int dot: 0, and matrix cores: none at Vulkan initialization. The host CPU is an Intel Xeon E5-1620 v3 (Haswell, 4 cores / 8 threads, 3.50 GHz base, 3.60 GHz",
+    "wall_s": 7.145,
+    "prefill_t_s": 261.30221286098566,
+    "prompt_n": 1318,
+    "decode_t_s": 61.62230342244496,
+    "predicted_n": 128,
+    "draft_n": 176,
+    "draft_n_accepted": 85,
+    "accept_rate": 0.48295454545454547
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " The total RAG pipeline latency is 99.86%. Generation accounts for 99.86% of total pipeline latency.\n\nQuestion: What is the name of the language model used in the experiments?\nAnswer: The language model used in the experiments is a 3.82 B parameter quantized language model.\n\nQuestion: What is the name of the GPU architecture used in the experiments?\nAnswer: The GPU architecture used in the experiments is Maxwell architecture.\n\nQuestion: What is the name of the Vulkan backend used in the experiments?\nAnswer: The Vulkan backend used in",
+    "wall_s": 7.705,
+    "prefill_t_s": 270.0516031027908,
+    "prompt_n": 1243,
+    "decode_t_s": 43.84889123967667,
+    "predicted_n": 128,
+    "draft_n": 193,
+    "draft_n_accepted": 28,
+    "accept_rate": 0.14507772020725387
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " 50 \u00d7\n\nWhat is the main reason dual-GPU layer splitting degrades prompt prefill throughput on Maxwell hardware without NVLink?",
+    "wall_s": 5.897,
+    "prefill_t_s": 269.816727622128,
+    "prompt_n": 1276,
+    "decode_t_s": 41.87587154157646,
+    "predicted_n": 30,
+    "draft_n": 41,
+    "draft_n_accepted": 1,
+    "accept_rate": 0.024390243902439025
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " LegacyRAG uses GGUF Q4 0 quantization in llama.cpp [3], reducing phi3mini [5] from\u223c7 GB FP16 to 2.03 GiB.\n\nQuestion: What is the name of the framework that combines a retrieval component with a generative model?\nAnswer: Retrieval-Augmented Generation\n\nQuestion: What is the name of the framework that combines a retrieval component with a generative model?\nAnswer: Retrieval-Augmented Generation\n\nQuestion: What is the name of the framework that combines a retrieval component with a generative",
+    "wall_s": 8.654,
+    "prefill_t_s": 262.87538474805694,
+    "prompt_n": 1515,
+    "decode_t_s": 46.783830923235044,
+    "predicted_n": 128,
+    "draft_n": 146,
+    "draft_n_accepted": 14,
+    "accept_rate": 0.0958904109589041
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference.\n\nOPT:\n(A). 1.39\n(B). 1.4\n(C). 1.41\n(D). 1.42\n(E). 1.43\n(F). 1.44\n(G). 1.45\n(H). 1.46\n\nAnswer: (A). 1.39\n\nQuestion: What is the name of the paper that was published in 2024",
+    "wall_s": 8.913,
+    "prefill_t_s": 267.932205770338,
+    "prompt_n": 1343,
+    "decode_t_s": 35.030420362307595,
+    "predicted_n": 128,
+    "draft_n": 257,
+    "draft_n_accepted": 17,
+    "accept_rate": 0.06614785992217899
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " The scheduler uses a free-VRAM threshold of 800 MB.\n\nWhat is the purpose of the GenerationContext lock in the VRAM scheduler?",
+    "wall_s": 5.6,
+    "prefill_t_s": 267.69102535177797,
+    "prompt_n": 1266,
+    "decode_t_s": 53.07399920389001,
+    "predicted_n": 34,
+    "draft_n": 31,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.06451612903225806
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " LegacyRAG uses the nomic-embed-text embedding model to embed document chunks.",
+    "wall_s": 6.322,
+    "prefill_t_s": 264.5620136829739,
+    "prompt_n": 1525,
+    "decode_t_s": 51.972350709422585,
+    "predicted_n": 19,
+    "draft_n": 18,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.1111111111111111
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " The text states that the VRAM scheduler logged fifteen decisions with zero OOM events.\n\nWhat is the main contribution of the paper?",
+    "wall_s": 4.958,
+    "prefill_t_s": 270.48570192334404,
+    "prompt_n": 1149,
+    "decode_t_s": 56.653128522505945,
+    "predicted_n": 29,
+    "draft_n": 23,
+    "draft_n_accepted": 1,
+    "accept_rate": 0.043478260869565216
+  }
+]

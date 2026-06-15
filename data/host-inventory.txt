@@ -1,0 +1,8 @@
+=== current (locked) clocks ===
+1410 MHz, 6000 MHz
+=== uname -r ===
+6.12.90+deb13-amd64
+=== driver/cuda ===
+595.71.05
+=== gpu spec ===
+NVIDIA GeForce GTX 1650, 4096 MiB, 6001 MHz, 2100 MHz

@@ -1,0 +1,14 @@
+# run output
+kv4-evidence/
+# local config (copied from config/example.env)
+config/local.env
+# generated figures (regenerate with figures/make_figures.py)
+figures/*.pdf
+figures/*.png
+# python / os cruft
+__pycache__/
+*.pyc
+.DS_Store
+# ansible local
+ansible/inventory.ini
+ansible/group_vars/all.yml

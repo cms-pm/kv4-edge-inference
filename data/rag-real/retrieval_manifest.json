@@ -1,0 +1,246 @@
+{
+  "win": 512,
+  "stride": 256,
+  "top_k": 8,
+  "embed_model": "nomic-embed-text",
+  "n_chunks": 79,
+  "questions": [
+    {
+      "id": "q1_gpu_bw",
+      "q": "What GPU does the LegacyRAG system run on, and what is that GPU's memory bandwidth?",
+      "gold": [
+        "173 GB/s",
+        "173"
+      ],
+      "chunk_ids": [
+        41,
+        40,
+        23,
+        24,
+        13,
+        59,
+        21,
+        11
+      ],
+      "scores": [
+        0.6458,
+        0.6293,
+        0.6224,
+        0.6215,
+        0.618,
+        0.6156,
+        0.6126,
+        0.6121
+      ],
+      "prompt_chars": 4347
+    },
+    {
+      "id": "q2_gen_pct",
+      "q": "What percentage of the total RAG pipeline latency is consumed by generation?",
+      "gold": [
+        "99.86"
+      ],
+      "chunk_ids": [
+        4,
+        45,
+        36,
+        3,
+        41,
+        22,
+        48,
+        1
+      ],
+      "scores": [
+        0.7279,
+        0.6737,
+        0.6711,
+        0.6388,
+        0.6359,
+        0.624,
+        0.6193,
+        0.6152
+      ],
+      "prompt_chars": 4340
+    },
+    {
+      "id": "q3_prefill",
+      "q": "By what factor does naive dual-GPU layer splitting degrade prompt prefill throughput?",
+      "gold": [
+        "50x",
+        "50\u00d7",
+        "50 times",
+        "50-fold",
+        "50"
+      ],
+      "chunk_ids": [
+        15,
+        52,
+        4,
+        44,
+        53,
+        43,
+        5,
+        14
+      ],
+      "scores": [
+        0.7993,
+        0.7292,
+        0.7278,
+        0.7201,
+        0.7153,
+        0.7019,
+        0.6973,
+        0.6913
+      ],
+      "prompt_chars": 4346
+    },
+    {
+      "id": "q4_model",
+      "q": "Which language model and quantization format does LegacyRAG use for generation?",
+      "gold": [
+        "Phi-3",
+        "Q4_0",
+        "Q4 0",
+        "Q4"
+      ],
+      "chunk_ids": [
+        77,
+        76,
+        18,
+        16,
+        72,
+        33,
+        19,
+        6
+      ],
+      "scores": [
+        0.6882,
+        0.6759,
+        0.6674,
+        0.6483,
+        0.6219,
+        0.6214,
+        0.6141,
+        0.6126
+      ],
+      "prompt_chars": 4341
+    },
+    {
+      "id": "q5_speedup",
+      "q": "What generation speedup does the Vulkan backend achieve over CPU-only inference?",
+      "gold": [
+        "1.39"
+      ],
+      "chunk_ids": [
+        18,
+        40,
+        21,
+        13,
+        19,
+        12,
+        20,
+        42
+      ],
+      "scores": [
+        0.7178,
+        0.707,
+        0.702,
+        0.6999,
+        0.6929,
+        0.6916,
+        0.6777,
+        0.6765
+      ],
+      "prompt_chars": 4342
+    },
+    {
+      "id": "q6_threshold",
+      "q": "What free-VRAM threshold does the scheduler use to decide when to route work to the CPU?",
+      "gold": [
+        "800 MB",
+        "800"
+      ],
+      "chunk_ids": [
+        31,
+        51,
+        32,
+        48,
+        59,
+        4,
+        56,
+        60
+      ],
+      "scores": [
+        0.729,
+        0.7175,
+        0.6762,
+        0.6449,
+        0.6215,
+        0.6176,
+        0.6137,
+        0.6008
+      ],
+      "prompt_chars": 4351
+    },
+    {
+      "id": "q7_embed",
+      "q": "Which embedding model does LegacyRAG use to embed document chunks?",
+      "gold": [
+        "nomic-embed-text",
+        "nomic"
+      ],
+      "chunk_ids": [
+        26,
+        16,
+        17,
+        25,
+        33,
+        27,
+        73,
+        74
+      ],
+      "scores": [
+        0.704,
+        0.6872,
+        0.6311,
+        0.6208,
+        0.6172,
+        0.6083,
+        0.5951,
+        0.5856
+      ],
+      "prompt_chars": 4327
+    },
+    {
+      "id": "q8_oom",
+      "q": "How many out-of-memory events occurred during the scheduler evaluation?",
+      "gold": [
+        "zero",
+        "0 OOM",
+        "no OOM",
+        "none"
+      ],
+      "chunk_ids": [
+        48,
+        12,
+        5,
+        31,
+        4,
+        55,
+        60,
+        47
+      ],
+      "scores": [
+        0.6646,
+        0.6449,
+        0.6074,
+        0.6072,
+        0.605,
+        0.6024,
+        0.597,
+        0.5936
+      ],
+      "prompt_chars": 4332
+    }
+  ]
+}

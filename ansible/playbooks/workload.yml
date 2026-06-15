@@ -1,0 +1,486 @@
+---
+# kv4 WORKLOAD ARM — workload-dependence of the kv4 trade-off.
+#
+# Companion to kv4-matrix.yml (which covers sustained decode-at-depth, the
+# agentic worst case for kv4). This arm covers the RAG/coordinator shape (long
+# prefill, short decode — Shaik's workload shape and our deployment shape) and
+# replicates Shaik's ngram (prompt-lookup) speculative lever to show it is
+# workload-specific.
+#
+#   B  prefill scaling      llama-bench pp{2048,8192,32768} x {f16,turbo4}
+#   C  RAG/coordinator e2e  llama-server long prompt + short decode; TTFT split
+#   D  ngram speculative    llama-lookup on RAG vs open-ended prompt x {f16,turbo4}
+#   E  batch/concurrency    llama-batched-bench -npl 1,2,4,8 x {f16,turbo4}
+#   F  spec x batch matrix  llama-server kv{f16,turbo4} x spec{off,ngram} x np{1,4}
+#
+# Same rigor preflight as the matrix (clock lock, sole-tenant, {{ work_dir }} evidence).
+# Run:  ansible-playbook playbooks/kv4-workload.yml   (full by default here)
+
+- name: kv4-workload Phase A — preflight + prompt fixtures
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+  tasks:
+    - name: Scrub + recreate evidence tree on {{ work_dir }}
+      become: true
+      ansible.builtin.shell: |
+        rm -rf {{ evidence_dir }}
+        mkdir -p {{ evidence_dir }}/bench {{ evidence_dir }}/gpu-telemetry {{ evidence_dir }}/rag {{ evidence_dir }}/lookup {{ evidence_dir }}/batch
+        chown -R {{ ansible_user }}:{{ ansible_user }} {{ evidence_dir }}
+      changed_when: true
+
+    - name: Persistence on
+      become: true
+      ansible.builtin.command: nvidia-smi -pm 1
+      changed_when: false
+
+    - name: Clean slate by port (not pkill -f; see runbook pkill_self_match)
+      become: true
+      ansible.builtin.shell: |
+        for p in 11435 11436 11437 11438; do fuser -k ${p}/tcp 2>/dev/null || true; done
+        sleep 2
+        exit 0
+      changed_when: false
+
+    - name: Sole-tenant assert
+      ansible.builtin.shell: nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader
+      register: compute_apps
+      changed_when: false
+      failed_when: compute_apps.stdout | trim | length > 0
+
+    - name: Stop Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: stopped}
+      ignore_errors: true
+
+    - name: Lock clocks to TDP
+      become: true
+      ansible.builtin.command: nvidia-smi --lock-gpu-clocks=tdp
+      changed_when: true
+
+    - name: Build prompt fixtures (RAG = input-copying; open = no reuse)
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}/rag
+        # ~4K-token RAG context: a coherent paragraph repeated, then an
+        # extractive question whose answer copies the context (ngram-friendly).
+        P="The gpu node is a single-tenant inference host built on an NVIDIA GTX 1650 with four gigabytes of GDDR6 memory at 192 gigabytes per second. "
+        : > context.txt
+        for i in $(seq 1 90); do printf '%s' "$P" >> context.txt; done
+        printf '\n\nQuestion: In one sentence, state the GPU model and its memory bandwidth exactly as written above.\nAnswer:' >> context.txt
+        # open-ended: output does not reuse input → ngram should not help.
+        printf 'Write an original four-line poem about an unfamiliar city at dawn.\n' > open.txt
+        wc -c context.txt open.txt
+      register: fixtures
+      changed_when: true
+
+    - name: Fixture sizes
+      ansible.builtin.debug:
+        var: fixtures.stdout_lines
+
+- name: kv4-workload Phase B — prefill scaling (llama-bench pp)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    bench_bin: "{{ llama_bin_dir }}/llama-bench"
+    sidecar_query: timestamp,utilization.gpu,utilization.memory,memory.used,power.draw,temperature.gpu,clocks.current.sm,clocks.current.memory,pstate
+    prefill_cells:
+      - {cond: "pp2048__kvf16",     kv: f16,    pp: 2048}
+      - {cond: "pp2048__kvturbo4",  kv: turbo4, pp: 2048}
+      - {cond: "pp8192__kvf16",     kv: f16,    pp: 8192}
+      - {cond: "pp8192__kvturbo4",  kv: turbo4, pp: 8192}
+      - {cond: "pp32768__kvf16",    kv: f16,    pp: 32768}
+      - {cond: "pp32768__kvturbo4", kv: turbo4, pp: 32768}
+  tasks:
+    - name: Prefill cells (pp only, n=0) with L2 sidecar; OOM-tolerant
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        nvidia-smi --query-gpu={{ sidecar_query }} --format=csv,noheader,nounits -lms 1000 \
+          > gpu-telemetry/$COND.csv 2>/dev/null &
+        SPID=$!
+        sleep 1
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ bench_bin }} \
+          -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 \
+          -ctk {{ item.kv }} -ctv {{ item.kv }} \
+          -p {{ item.pp }} -n 0 -r 5 -o jsonl > bench/$COND.jsonl 2> bench/$COND.err
+        RC=$?
+        kill $SPID 2>/dev/null || true
+        sleep 1
+        exit $RC
+      loop: "{{ prefill_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: prefill_runs
+      changed_when: true
+      failed_when: false
+
+    - name: Prefill summary
+      ansible.builtin.shell: "tail -1 {{ evidence_dir }}/bench/{{ item.cond }}.jsonl 2>/dev/null || cat {{ evidence_dir }}/bench/{{ item.cond }}.err"
+      loop: "{{ prefill_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: prefill_tails
+      changed_when: false
+
+    - name: Prefill scaling results
+      ansible.builtin.debug:
+        var: prefill_tails.results | map(attribute='stdout') | list
+
+- name: kv4-workload Phase C — RAG/coordinator end-to-end (TTFT split)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    server_bin: "{{ llama_bin_dir }}/llama-server"
+    server_port: 11438
+    rag_cells:
+      - {cond: "rag__kvf16__c8192",    kv: f16,    ctx: 8192}
+      - {cond: "rag__kvturbo4__c8192", kv: turbo4, ctx: 8192}
+  tasks:
+    - name: RAG e2e — load server, POST long prompt + short decode, capture timings
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        nohup env LD_LIBRARY_PATH={{ cuda_lib }} {{ server_bin }} \
+          -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 \
+          --cache-type-k {{ item.kv }} --cache-type-v {{ item.kv }} \
+          -c {{ item.ctx }} --host 0.0.0.0 --port {{ server_port }} \
+          > rag/$COND.server.log 2>&1 &
+        SRV=$!
+        # Health-wait with dead-server sentinel: break at once if the server PID
+        # exits (OOM/crash) rather than polling a dead port for the full timeout.
+        HEALTH="down"
+        for i in $(seq 1 90); do
+          if ! kill -0 $SRV 2>/dev/null; then
+            echo "server pid $SRV exited before health (OOM/crash)" >> rag/$COND.server.log
+            HEALTH="oom"; break
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:{{ server_port }}/health 2>/dev/null || true)
+          [ "$code" = "200" ] && { HEALTH="up"; break; }
+          sleep 2
+        done
+        echo "health=$HEALTH" >> rag/$COND.server.log
+        # RAG/coordinator shape: long prompt (~4K tok), short decode.
+        # Build the JSON payload to a file (no bash process-substitution: ansible
+        # shell is /bin/sh). cache_prompt off so prefill/TTFT is measured fresh.
+        python3 -c "import json;open('rag/$COND.req.json','w').write(json.dumps({'prompt':open('rag/context.txt').read(),'n_predict':64,'temperature':0,'cache_prompt':False}))"
+        curl -s http://127.0.0.1:{{ server_port }}/completion \
+          -H 'Content-Type: application/json' \
+          --data-binary @rag/$COND.req.json > rag/$COND.gen.json 2>/dev/null || true
+        kill -9 $SRV 2>/dev/null || true
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        exit 0
+      loop: "{{ rag_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      changed_when: true
+      failed_when: false
+
+    - name: RAG timings (prefill/TTFT vs decode)
+      ansible.builtin.shell: |
+        python3 - "{{ evidence_dir }}/rag/{{ item.cond }}.gen.json" <<'PY'
+        import json,sys
+        try:
+          t=json.load(open(sys.argv[1])).get("timings",{})
+          print("{}: prefill {:.1f} t/s ({} tok, {:.0f} ms TTFT), decode {:.1f} t/s ({} tok)".format(
+            sys.argv[1].split('/')[-1],
+            t.get("prompt_per_second",0), t.get("prompt_n",0), t.get("prompt_ms",0),
+            t.get("predicted_per_second",0), t.get("predicted_n",0)))
+        except Exception as e:
+          print("parse-fail", sys.argv[1], e)
+        PY
+      loop: "{{ rag_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: rag_timings
+      changed_when: false
+
+    - name: RAG end-to-end results
+      ansible.builtin.debug:
+        var: rag_timings.results | map(attribute='stdout') | list
+
+- name: kv4-workload Phase D — ngram speculative (workload-specific)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    lookup_bin: "{{ llama_bin_dir }}/llama-lookup"
+    lookup_cells:
+      - {cond: "lookup__rag__kvf16",     kv: f16,    prompt: context.txt}
+      - {cond: "lookup__rag__kvturbo4",  kv: turbo4, prompt: context.txt}
+      - {cond: "lookup__open__kvf16",    kv: f16,    prompt: open.txt}
+      - {cond: "lookup__open__kvturbo4", kv: turbo4, prompt: open.txt}
+  tasks:
+    - name: ngram prompt-lookup decode (RAG vs open-ended) x KV quant
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        # -b 4096: the RAG prompt (~3.5K tok) exceeds the default 2048 n_batch,
+        # which trips GGML_ASSERT(n_tokens_all <= cparams.n_batch) in llama-lookup.
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ lookup_bin }} \
+          -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 \
+          -ctk {{ item.kv }} -ctv {{ item.kv }} -c 8192 -b 4096 \
+          -f rag/{{ item.prompt }} -n 128 \
+          > lookup/$COND.out 2> lookup/$COND.err
+        exit 0
+      loop: "{{ lookup_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      changed_when: true
+      failed_when: false
+
+    - name: ngram acceptance + speedup (from llama-lookup output)
+      ansible.builtin.shell: "grep -iE 'accept|n_drafted|n_accept|tokens per second|eval time|speculative|t/s' {{ evidence_dir }}/lookup/{{ item.cond }}.out {{ evidence_dir }}/lookup/{{ item.cond }}.err 2>/dev/null | head -10 || true"
+      loop: "{{ lookup_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: lookup_summary
+      changed_when: false
+
+    - name: ngram results
+      ansible.builtin.debug:
+        var: lookup_summary.results | map(attribute='stdout') | list
+
+# Batch/concurrency sweep: tests whether batching amortizes turbo4's per-step
+# kernel overhead so its decode gap vs f16 closes (~1/B), and whether kv4's
+# capacity lets more sequences' KV fit on 4 GB than f16. llama-batched-bench
+# reports prompt/gen/total t/s per (npp,ntg,npl). f16 at high npl may OOM on
+# 4 GB (tolerated) — itself a capacity data point favouring kv4.
+- name: kv4-workload Phase E — batch/concurrency sweep (f16 vs turbo4)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    bb_bin: "{{ llama_bin_dir }}/llama-batched-bench"
+    sidecar_query: timestamp,utilization.gpu,utilization.memory,memory.used,power.draw,temperature.gpu,clocks.current.sm,clocks.current.memory,pstate
+    batch_cells:
+      - {cond: "batch__kvf16",    kv: f16}
+      - {cond: "batch__kvturbo4", kv: turbo4}
+  tasks:
+    - name: Batch sweep -npl 1,2,4,8 (npp256/ntg128) with L2 sidecar; OOM-tolerant
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        nvidia-smi --query-gpu={{ sidecar_query }} --format=csv,noheader,nounits -lms 1000 \
+          > gpu-telemetry/$COND.csv 2>/dev/null &
+        SPID=$!
+        sleep 1
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ bb_bin }} \
+          -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 \
+          -ctk {{ item.kv }} -ctv {{ item.kv }} -c 8192 -b 2048 -ub 512 \
+          -npp 256 -ntg 128 -npl 1,2,4,8 --output-format jsonl \
+          > batch/$COND.jsonl 2> batch/$COND.err
+        RC=$?
+        kill $SPID 2>/dev/null || true
+        sleep 1
+        exit $RC
+      loop: "{{ batch_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: batch_runs
+      changed_when: true
+      failed_when: false
+
+    - name: Batch sweep summary (per-npl gen throughput)
+      ansible.builtin.shell: "cat {{ evidence_dir }}/batch/{{ item.cond }}.jsonl 2>/dev/null | tail -6 || cat {{ evidence_dir }}/batch/{{ item.cond }}.err | tail -3"
+      loop: "{{ batch_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: batch_tails
+      changed_when: false
+
+    - name: Batch sweep results
+      ansible.builtin.debug:
+        var: batch_tails.results | map(attribute='stdout') | list
+
+# Combined spec x batch matrix: the cross of Shaik's two throughput levers on
+# one card. ngram speculative is draft-free (the fork's llama-server has built-in
+# --spec-type ngram-cache, no VRAM for a draft model), and -np/--cont-batching
+# gives continuous batching. We cross kv {f16,turbo4} x spec {off,ngram} x
+# np {1,4} and drive each server with a concurrent client (np identical RAG
+# requests) measuring AGGREGATE decode tok/s + ngram acceptance. Tests whether
+# the two levers compound, whether batching amortizes turbo4's per-step overhead,
+# and whether ngram's RAG win survives under concurrency. -c 8192 with np=4 gives
+# 2048 ctx/slot, so the RAG prompt is the medium (~1.4K tok) fixture, not the 4K.
+- name: kv4-workload Phase F — spec x batch combined matrix
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    server_bin: "{{ llama_bin_dir }}/llama-server"
+    server_port: 11439
+    sidecar_query: timestamp,utilization.gpu,utilization.memory,memory.used,power.draw,temperature.gpu,clocks.current.sm,clocks.current.memory,pstate
+    sb_reps: 3
+    sb_npred: 128
+    specbatch_cells:
+      - {cond: "sb__kvf16__specoff__np1",     kv: f16,    spec: "off",   npl: 1}
+      - {cond: "sb__kvf16__specngram__np1",   kv: f16,    spec: "ngram", npl: 1}
+      - {cond: "sb__kvf16__specoff__np4",     kv: f16,    spec: "off",   npl: 4}
+      - {cond: "sb__kvf16__specngram__np4",   kv: f16,    spec: "ngram", npl: 4}
+      - {cond: "sb__kvturbo4__specoff__np1",   kv: turbo4, spec: "off",   npl: 1}
+      - {cond: "sb__kvturbo4__specngram__np1", kv: turbo4, spec: "ngram", npl: 1}
+      - {cond: "sb__kvturbo4__specoff__np4",   kv: turbo4, spec: "off",   npl: 4}
+      - {cond: "sb__kvturbo4__specngram__np4", kv: turbo4, spec: "ngram", npl: 4}
+  tasks:
+    - name: Build medium RAG fixture (fits 2048 ctx/slot at np=4) + concurrent client
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        mkdir -p specbatch
+        P="The gpu node is a single-tenant inference host built on an NVIDIA GTX 1650 with four gigabytes of GDDR6 memory at 192 gigabytes per second. "
+        : > rag/context_med.txt
+        for i in $(seq 1 45); do printf '%s' "$P" >> rag/context_med.txt; done
+        printf '\n\nQuestion: In one sentence, state the GPU model and its memory bandwidth exactly as written above.\nAnswer:' >> rag/context_med.txt
+        wc -c rag/context_med.txt
+      register: sb_fixture
+      changed_when: true
+
+    - name: Write concurrent spec x batch client
+      ansible.builtin.copy:
+        dest: "{{ evidence_dir }}/specbatch/sb_client.py"
+        mode: "0755"
+        content: |
+          # Fire NPL concurrent identical /completion requests for REPS bursts;
+          # report aggregate decode tok/s (sum predicted tokens / burst wall),
+          # mean per-request decode tok/s, and ngram acceptance if reported.
+          import sys, json, time, urllib.request, concurrent.futures, statistics
+          url, promptfile = sys.argv[1], sys.argv[2]
+          npl, npred = int(sys.argv[3]), int(sys.argv[4])
+          outp = sys.argv[5]
+          reps = int(sys.argv[6]) if len(sys.argv) > 6 else 3
+          prompt = open(promptfile).read()
+          payload = {"prompt": prompt, "n_predict": npred, "temperature": 0, "cache_prompt": False}
+          def fire(_i):
+              data = json.dumps(payload).encode()
+              req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+              with urllib.request.urlopen(req, timeout=300) as r:
+                  j = json.load(r)
+              tm = j.get("timings", {})
+              return {k: tm.get(k) for k in ("prompt_n", "prompt_ms", "prompt_per_second",
+                      "predicted_n", "predicted_ms", "predicted_per_second",
+                      "draft_n", "draft_n_accepted")}
+          bursts = []
+          for _ in range(reps):
+              t0 = time.time()
+              with concurrent.futures.ThreadPoolExecutor(max_workers=npl) as ex:
+                  res = list(ex.map(fire, range(npl)))
+              wall = time.time() - t0
+              agg = sum((r["predicted_n"] or 0) for r in res)
+              dn = sum((r["draft_n"] or 0) for r in res)
+              da = sum((r["draft_n_accepted"] or 0) for r in res)
+              bursts.append({"wall_s": wall, "agg_predicted": agg,
+                             "agg_decode_tok_s": (agg / wall if wall > 0 else 0),
+                             "mean_req_decode_tok_s": statistics.mean((r["predicted_per_second"] or 0) for r in res),
+                             "draft_n": dn, "draft_n_accepted": da,
+                             "accept_rate": (da / dn if dn else None), "res": res})
+          aggs = [b["agg_decode_tok_s"] for b in bursts]
+          out = {"npl": npl, "reps": reps, "median_agg_decode_tok_s": statistics.median(aggs),
+                 "agg_decode_tok_s_runs": aggs,
+                 "median_mean_req_decode_tok_s": statistics.median(b["mean_req_decode_tok_s"] for b in bursts),
+                 "accept_rate_runs": [b["accept_rate"] for b in bursts], "bursts": bursts}
+          json.dump(out, open(outp, "w"), indent=2)
+          print(json.dumps({k: out[k] for k in ("npl", "median_agg_decode_tok_s",
+                "median_mean_req_decode_tok_s", "accept_rate_runs")}))
+
+    - name: spec x batch cells (server + concurrent client) with L2 sidecar; OOM-tolerant
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        SPECARGS=""
+        if [ "{{ item.spec }}" = "ngram" ]; then SPECARGS="--spec-type ngram-cache"; fi
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        nvidia-smi --query-gpu={{ sidecar_query }} --format=csv,noheader,nounits -lms 1000 \
+          > gpu-telemetry/$COND.csv 2>/dev/null &
+        SPID=$!
+        nohup env LD_LIBRARY_PATH={{ cuda_lib }} {{ server_bin }} \
+          -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 \
+          --cache-type-k {{ item.kv }} --cache-type-v {{ item.kv }} \
+          -c 8192 -np {{ item.npl }} --cont-batching $SPECARGS \
+          --host 0.0.0.0 --port {{ server_port }} \
+          > specbatch/$COND.server.log 2>&1 &
+        SRV=$!
+        HEALTH="down"
+        for i in $(seq 1 90); do
+          if ! kill -0 $SRV 2>/dev/null; then
+            echo "server pid $SRV exited before health (OOM/crash)" >> specbatch/$COND.server.log
+            HEALTH="oom"; break
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:{{ server_port }}/health 2>/dev/null || true)
+          [ "$code" = "200" ] && { HEALTH="up"; break; }
+          sleep 2
+        done
+        echo "health=$HEALTH" >> specbatch/$COND.server.log
+        if [ "$HEALTH" = "up" ]; then
+          python3 specbatch/sb_client.py \
+            http://127.0.0.1:{{ server_port }}/completion \
+            rag/context_med.txt {{ item.npl }} {{ sb_npred }} \
+            specbatch/$COND.json {{ sb_reps }} > specbatch/$COND.summary 2> specbatch/$COND.client.err || true
+        else
+          echo "{\"skipped\":\"$HEALTH\"}" > specbatch/$COND.json
+        fi
+        kill -9 $SRV 2>/dev/null || true
+        kill $SPID 2>/dev/null || true
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        exit 0
+      loop: "{{ specbatch_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: sb_runs
+      changed_when: true
+      failed_when: false
+
+    - name: spec x batch summary (median aggregate decode tok/s + accept rate)
+      ansible.builtin.shell: "echo -n '{{ item.cond }}: '; cat {{ evidence_dir }}/specbatch/{{ item.cond }}.summary 2>/dev/null || cat {{ evidence_dir }}/specbatch/{{ item.cond }}.json 2>/dev/null || echo missing"
+      loop: "{{ specbatch_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: sb_tails
+      changed_when: false
+
+    - name: spec x batch results
+      ansible.builtin.debug:
+        var: sb_tails.results | map(attribute='stdout') | list
+
+- name: kv4-workload Phase Z — reset clocks + fetch
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-workload-evidence"
+  tasks:
+    - name: Reset GPU clocks
+      become: true
+      ansible.builtin.command: nvidia-smi --reset-gpu-clocks
+      changed_when: true
+      ignore_errors: true
+
+    - name: Restart Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: started}
+      ignore_errors: true
+
+    - name: Ensure controller evidence dir exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/evidence/kv4-workload"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Fetch evidence
+      ansible.posix.synchronize:
+        src: "{{ evidence_dir }}/"
+        dest: "{{ playbook_dir }}/evidence/kv4-workload/"
+        mode: pull
+        recursive: true
+
+    - name: Done
+      ansible.builtin.debug:
+        msg: "kv4 workload arm complete. Evidence: ./evidence/kv4-workload/"

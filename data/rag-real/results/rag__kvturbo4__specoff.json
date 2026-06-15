@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on the K4200 GPU, which has 4 GB GDDR5 and 173 GB/s. The GPU's memory bandwidth is 173 GB/s, and the memory capacity is 45.52 GB. The GPU's memory bandwidth is 173 GB/s, and the memory bandwidth is 173 GB/s. The GPU's memory bandwidth is 173 GB/s, and the memory capacity is 45.52 GB. The GPU's memory bandwidth is 173 GB/s, and the memory capacity is 4",
+    "wall_s": 6.869,
+    "prefill_t_s": 264.58058597683373,
+    "prompt_n": 1205,
+    "decode_t_s": 55.86480020041497,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " 99.86%\nThe answer is 99.86%.\nThe answer is 99.86%.\nThe answer is 99.86%.\nThe answer is 99.86%.\nThe answer is 99.86%.\nThe answer is 99.66%.\nThe answer is 99.66%.\nThe answer is 99.86%.\nThe answer is 99.86%.\nThe answer is 99.86%.\nThe answer is 99.86%.\n",
+    "wall_s": 6.555,
+    "prefill_t_s": 267.586733514101,
+    "prompt_n": 1141,
+    "decode_t_s": 56.67159739080424,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " The answer is: generation throughput\nThe assistant's response:\nThe answer is: generation throughput\nThe assistant's response:\n\\boxed{generation throughput}\nThe assistant's response is correct. The question is asking about the factor that naive dual-GPU layer splitting degrades on. The context provided discusses the generation throughput, full latency, and multiGPU split behavior under PCIe-only interconnects. The answer is generation throughput.\nThe assistant's response is correct and matches with the question. The answer is: generation throughput\nThe assistant's response is correct.\nThe assistant's response is correct.\nThe answer is: generation throughput\nThe assistant's response",
+    "wall_s": 6.806,
+    "prefill_t_s": 265.3405118118716,
+    "prompt_n": 1195,
+    "decode_t_s": 56.2649728565463,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " The answer must be contained within 300 words.\nTheThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within 300 words.\nThe answer must be contained within ",
+    "wall_s": 7.899,
+    "prefill_t_s": 256.91832012821584,
+    "prompt_n": 1415,
+    "decode_t_s": 54.16737549755697,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference on the Q\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe The answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.39.\nThe answer is 1.",
+    "wall_s": 6.973,
+    "prefill_t_s": 266.24424884328545,
+    "prompt_n": 1232,
+    "decode_t_s": 55.280257951503664,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " The VRAM scheduler uses the threshold of 800 MB to decide when to route work to the CPU. The threshold is set by the user and is usually set to 800 MB. The threshold is set by the user and is usually set to 800 MB. The threshold is set by the user and is usually set to 800 MB. The threshold is set by the user and is usually set to 800 MB. The threshold is set by the user and is usually set to 800 MB. The threshold is set by the user and is usually set to 80",
+    "wall_s": 6.69,
+    "prefill_t_s": 265.60781018743415,
+    "prompt_n": 1169,
+    "decode_t_s": 56.7971551724903,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " The embedding model used by LegacyRAG to embed document chunks is the 765-dimensional vectors\nnormalized by the VRAM-aware scheduler and stored in the persistent\nNumPy store. The specific model used is the 500-500 MB model.\nThe answer is the 777-dimensional vectors\nnormalized by the VRAM-aware scheduler and stored in the persistent NumPy store. The specific model used is the 500-500 MB model.\nThe answer is the 777-dimensional vectors\nThe answer is the 777-dimensional vectors\nThe answer is the 77",
+    "wall_s": 7.917,
+    "prefill_t_s": 259.525304624632,
+    "prompt_n": 1430,
+    "decode_t_s": 53.8122624693102,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " 00\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nTheThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is 0.\nThe answer is",
+    "wall_s": 6.177,
+    "prefill_t_s": 268.95368571469515,
+    "prompt_n": 1051,
+    "decode_t_s": 57.30735996633192,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  }
+]

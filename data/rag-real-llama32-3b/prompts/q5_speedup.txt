@@ -1,0 +1,94 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] benefit from batched GPU execution, while generation models
+(2–70 GB) require sustained VRAM throughout inference. On
+VRAM-limited hardware these requirements create a scheduling
+conflict that LegacyRAG addresses.
+B. LLM Quantization for Constrained Hardware
+Frantaret al.[10] introduced GPTQ, an accurate one-shot
+post-training quantization method enabling 7B+ models in
+under 4 GB VRAM. Linet al.extended this with AWQ [11],
+the MLSys 2024 Best Paper, demonstrating 4-bit deployment on
+edge devices with mini
+
+[2] 9 × generation speedup (9.07
+vs. 6.52 tok/s). Prompt evaluation is slower on GPU (8.85 vs.
+21.14 tok/s) because the K4200’s lack of FP16 and integer
+dot-product instructions forces FP32 fallback in the Vulkan
+backend [4]. Autoregressive decode benefits from GPU memory
+bandwidth (173 GB/s vs. ≈45 GB/s dual-channel DDR4 on the
+E5-1620 v3), explaining the generation speedup.
+C. RAG Pipeline Benchmark
+Fig. 2 and Table III show end-to-end RAG latency for three
+sequential requests following the architecture of Le
+
+[3] essential for latency-sensitive
+and privacy-sensitive workloads. Recent work on on-device
+inference [8] demonstrates speculative decoding for mobile
+hardware, but assumes compute capability ≥6.0 (Pascal) and
+does not address CUDA-abandoned Maxwell cards. To our
+knowledge, no prior published work has characterized full RAG
+pipeline performance on Maxwell-era hardware via Vulkan.
+D. Multi-GPU Parallelism and Communication Overhead
+Narayananet al.[9] showed that sub-optimal tensor and
+pipeline parallelism comb
+
+[4] irm
+on Maxwell-class hardware.
+This paper makes four contributions:
+1) We demonstrate that Vulkan [4] provides a viable path to
+GPU-accelerated LLM inference on CUDA-abandoned
+hardware, achieving a 1.39 × generation speedup over
+CPU-only inference on the Quadro K4200.
+2) We design and implement LegacyRAG, a VRAM-aware
+RAG pipeline with a pre-operation scheduler that queries
+live GPU memory state and routes embedding workloads
+to prevent OOM conditions.
+3) We empirically characterize RAG pipeline performance
+
+[5] ware
+Frantaret al.[10] introduced GPTQ, an accurate one-shot
+post-training quantization method enabling 7B+ models in
+under 4 GB VRAM. Linet al.extended this with AWQ [11],
+the MLSys 2024 Best Paper, demonstrating 4-bit deployment on
+edge devices with minimal accuracy degradation. LegacyRAG
+uses GGUF Q4 0 quantization in llama.cpp [3], reducing phi3mini [5] from∼7 GB FP16 to 2.03 GiB.
+C. Edge and On-Premise LLM Inference
+Zhouet al.[7] characterize the “last mile” of AI deployment, showing edge inference is
+
+[6] ed hardware these workloads
+compete for VRAM, and naive co-scheduling causes out-ofmemory (OOM) crashes. Multi-GPU inference literature [9]
+shows that inter-device synchronization dominates throughput
+at low memory bandwidth, a finding our experiments confirm
+on Maxwell-class hardware.
+This paper makes four contributions:
+1) We demonstrate that Vulkan [4] provides a viable path to
+GPU-accelerated LLM inference on CUDA-abandoned
+hardware, achieving a 1.39 × generation speedup over
+CPU-only inference on the Q
+
+[7] mal accuracy degradation. LegacyRAG
+uses GGUF Q4 0 quantization in llama.cpp [3], reducing phi3mini [5] from∼7 GB FP16 to 2.03 GiB.
+C. Edge and On-Premise LLM Inference
+Zhouet al.[7] characterize the “last mile” of AI deployment, showing edge inference is essential for latency-sensitive
+and privacy-sensitive workloads. Recent work on on-device
+inference [8] demonstrates speculative decoding for mobile
+hardware, but assumes compute capability ≥6.0 (Pascal) and
+does not address CUDA-abandoned Maxwell cards. T
+
+[8] wiset al.[1].
+Generation accounts for 99.86% of total pipeline latency;
+embedding 0.14%; retrieval <0.001%. Any acceleration of
+embedding or retrieval—including the quantization gains of
+TABLE III
+LEGACYRAG PIPELINELATENCY(SEQUENTIAL, SINGLEGPU VULKAN)
+Req. Emb.(s) Ret.(s) Gen.(s) Total(s) tok/s
+1 0.625 0.0002 575.25 575.89 0.89
+2 0.835 0.0002 307.68 308.53 1.66
+3 0.511 0.0001 525.23 525.76 0.29
+Mean 0.657 0.0002 469.39 470.06 0.95
+Fig. 3. Generation throughput. Left: decode tok/s across all four configurat
+
+Question: What generation speedup does the Vulkan backend achieve over CPU-only inference?
+Answer:

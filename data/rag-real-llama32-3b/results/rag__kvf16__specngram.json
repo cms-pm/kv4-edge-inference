@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on Quadro K4200 GPUs, each with 4 GB GDDR5 memory at 173 GB/s bandwidth.",
+    "wall_s": 8.506,
+    "prefill_t_s": 151.65552835130683,
+    "prompt_n": 1136,
+    "decode_t_s": 31.21504041340797,
+    "predicted_n": 31,
+    "draft_n": 40,
+    "draft_n_accepted": 14,
+    "accept_rate": 0.35
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " 99.86% (from [1]) and also stated in [2].",
+    "wall_s": 7.879,
+    "prefill_t_s": 151.40087711947263,
+    "prompt_n": 1084,
+    "decode_t_s": 30.648835855051438,
+    "predicted_n": 18,
+    "draft_n": 16,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.125
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " 50 \u00d7.",
+    "wall_s": 7.63,
+    "prefill_t_s": 156.07722199267414,
+    "prompt_n": 1120,
+    "decode_t_s": 14.839084962664863,
+    "predicted_n": 5,
+    "draft_n": 16,
+    "draft_n_accepted": 0,
+    "accept_rate": 0.0
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " LegacyRAG uses GGUF Q4 0 quantization in llama.cpp, reducing phi3-mini from \u223c7 GB FP16 to 2.03 GiB. This implies that LegacyRAG uses the phi3-mini model and the GGUF Q4 0 quantization format for generation.",
+    "wall_s": 11.211,
+    "prefill_t_s": 152.16219933758413,
+    "prompt_n": 1312,
+    "decode_t_s": 25.196195049435342,
+    "predicted_n": 62,
+    "draft_n": 69,
+    "draft_n_accepted": 8,
+    "accept_rate": 0.11594202898550725
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " 1.39 \u00d7 generation speedup over CPU-only inference on the Quadro K4200.",
+    "wall_s": 8.527,
+    "prefill_t_s": 151.84602129212806,
+    "prompt_n": 1154,
+    "decode_t_s": 26.396036069554814,
+    "predicted_n": 21,
+    "draft_n": 40,
+    "draft_n_accepted": 12,
+    "accept_rate": 0.3
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " 800 MB.",
+    "wall_s": 7.48,
+    "prefill_t_s": 154.69671778162117,
+    "prompt_n": 1110,
+    "decode_t_s": 23.293299915212387,
+    "predicted_n": 5,
+    "draft_n": 8,
+    "draft_n_accepted": 0,
+    "accept_rate": 0.0
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " The embedding model used by LegacyRAG is not explicitly stated in the provided context. However, it is mentioned that the embedding model is approximately 280 MB peak and is used in conjunction with the nomic-embed-text [6] for question embedding. \n\nNote: The provided context does not explicitly mention the name of the embedding model used by LegacyRAG. However, it does provide information about the embedding model's size and its usage in conjunction with nomic-embed-text [6]. \n\nIf you want to provide a more specific answer, you can try to infer the name of the embedding model from the provided context. However,",
+    "wall_s": 12.799,
+    "prefill_t_s": 152.65144633426178,
+    "prompt_n": 1299,
+    "decode_t_s": 30.42876507234201,
+    "predicted_n": 128,
+    "draft_n": 92,
+    "draft_n_accepted": 4,
+    "accept_rate": 0.043478260869565216
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " Zero OOM events occurred.",
+    "wall_s": 6.771,
+    "prefill_t_s": 156.67776518906888,
+    "prompt_n": 1016,
+    "decode_t_s": 52.07519658386711,
+    "predicted_n": 7,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  }
+]

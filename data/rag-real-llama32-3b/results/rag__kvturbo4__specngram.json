@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on Quadro K4200 GPUs, which have 4 GB GDDR5 memory at a bandwidth of 173 GB/s.",
+    "wall_s": 8.704,
+    "prefill_t_s": 153.32968365494776,
+    "prompt_n": 1136,
+    "decode_t_s": 25.93444558049541,
+    "predicted_n": 33,
+    "draft_n": 48,
+    "draft_n_accepted": 13,
+    "accept_rate": 0.2708333333333333
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " 99.86% (from [1]).\n\nNote: The provided context is a technical paper discussing the performance of a RAG (Recurrent Autoencoder for Generative Models) pipeline on a Maxwell-era GPU, specifically the NVIDIA Quadro K4200. The paper evaluates the performance of the pipeline under various conditions, including single-GPU and dual-GPU configurations, and discusses the impact of thermal throttling, queue-induced warm-up, and other factors on the pipeline's performance.",
+    "wall_s": 10.842,
+    "prefill_t_s": 153.9665563050299,
+    "prompt_n": 1084,
+    "decode_t_s": 26.292104215527267,
+    "predicted_n": 99,
+    "draft_n": 89,
+    "draft_n_accepted": 9,
+    "accept_rate": 0.10112359550561797
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " Naive dual-GPU layer splitting degrades prompt prefill by 50 \u00d7 (from \u223c26 to 0.52 tok/s).",
+    "wall_s": 8.857,
+    "prefill_t_s": 154.32566573611965,
+    "prompt_n": 1120,
+    "decode_t_s": 19.169770039438607,
+    "predicted_n": 30,
+    "draft_n": 56,
+    "draft_n_accepted": 3,
+    "accept_rate": 0.05357142857142857
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " LegacyRAG uses GGUF Q4 0 quantization in llama.cpp, reducing phi3mini from \u223c7 GB FP16 to 2.03 GiB. The model used is phi3mini, and the quantization format is GGUF Q4 0.",
+    "wall_s": 11.509,
+    "prefill_t_s": 152.20060968408862,
+    "prompt_n": 1312,
+    "decode_t_s": 20.038790880451735,
+    "predicted_n": 57,
+    "draft_n": 91,
+    "draft_n_accepted": 5,
+    "accept_rate": 0.054945054945054944
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference on the Quadro K4200.",
+    "wall_s": 8.562,
+    "prefill_t_s": 150.19161795417153,
+    "prompt_n": 1154,
+    "decode_t_s": 31.50342842118145,
+    "predicted_n": 26,
+    "draft_n": 32,
+    "draft_n_accepted": 13,
+    "accept_rate": 0.40625
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " 800 MB. \n\nNote: The question is based on the provided context, and the answer is directly mentioned in the context. \n\nPlease let me know if you need any further clarification or details. \n\nThe final answer is: $\\boxed{800}$",
+    "wall_s": 9.301,
+    "prefill_t_s": 152.93578846252413,
+    "prompt_n": 1110,
+    "decode_t_s": 25.98008626387874,
+    "predicted_n": 52,
+    "draft_n": 40,
+    "draft_n_accepted": 0,
+    "accept_rate": 0.0
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " The embedding model used by LegacyRAG is not explicitly stated in the provided context, but it is mentioned that the embedding models (100\u2013500 MB) are used in the standard RAG pipeline. However, it is also mentioned that the LegacyRAG service uses a VRAM-aware scheduler to embed each chunk, and that the normalized 768-dimensional vectors are stored in a persistent NumPy store. Therefore, it can be inferred that LegacyRAG uses a VRAM-aware embedding model that is capable of producing 768-dimensional vectors. \n\nNote: The question is answered based on the provided context, and the answer is concise and accurate.",
+    "wall_s": 13.632,
+    "prefill_t_s": 150.9838357797984,
+    "prompt_n": 1299,
+    "decode_t_s": 25.675089366360858,
+    "predicted_n": 128,
+    "draft_n": 115,
+    "draft_n_accepted": 11,
+    "accept_rate": 0.09565217391304348
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " Zero OOM events occurred.",
+    "wall_s": 6.751,
+    "prefill_t_s": 155.01484465483335,
+    "prompt_n": 1016,
+    "decode_t_s": 45.07782364267453,
+    "predicted_n": 7,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  }
+]

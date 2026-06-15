@@ -1,0 +1,362 @@
+---
+# kv4 — KV-cache quantization matrix on gpu (GTX 1650, sm_75).
+#
+# Shaik-modeled study, kv4 axis. Instruments are the fork's canonical tools
+# (present in the build, purpose-built, report pp/tg with mean±stddev):
+#   - llama-bench        → throughput matrix (kv-quant × model × ngl × pp/tg)
+#   - llama-server load  → VRAM-vs-context capacity curve (peak nvidia-smi)
+#   - llama-batched-bench → batch/parallel axis      (optional play, profile=full)
+#   - llama-speculative / llama-lookup → speculative rung (optional, profile=full)
+#
+# Rigor (experiment-design-rigor.md + phase-2-eval-rigor-risks.md):
+#   preflight = persistence on, lock GPU clocks, sole-tenant assert, thermal
+#   warmup; L2 = 1 Hz nvidia-smi sidecar per cell; provenance bound to runs.yaml.
+#   NOTE: power.draw is [N/A] on the GTX 1650 → no energy/Wh metric (expected).
+#   NOTE: ncu/nsys absent → L4 per-kernel profiling unavailable; achieved-
+#   bandwidth roofline is derived post-hoc (tg × bytes/token vs 192 GB/s).
+#
+# Evidence lands on {{ work_dir }} (root fs is ~98% full — do NOT use /tmp).
+#
+# Profiles:  -e matrix_profile=smoke (default, fast gate)  |  full
+#
+# Run (from proxy):
+#   rsync -avz --delete ansible/playbooks/ \
+#     <your-ansible-controller>:~/ansible/playbooks/
+#   ssh <your-ansible-controller> \
+#     'cd ~/ansible && ansible-playbook playbooks/kv4-matrix.yml \
+#        -e matrix_profile=full'
+
+- name: kv4 Phase A — preflight (host control + provenance)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+  tasks:
+
+    - name: Scrub + recreate evidence tree (on {{ work_dir }})
+      become: true
+      ansible.builtin.shell: |
+        rm -rf {{ evidence_dir }}
+        mkdir -p {{ evidence_dir }}/bench {{ evidence_dir }}/gpu-telemetry {{ evidence_dir }}/vram {{ evidence_dir }}/ncu
+        chown -R {{ ansible_user }}:{{ ansible_user }} {{ evidence_dir }}
+      changed_when: true
+
+    - name: Persistence mode on
+      become: true
+      ansible.builtin.command: nvidia-smi -pm 1
+      changed_when: false
+
+    - name: Clean slate — kill any leftover fork llama-server on our ports
+      # Reaps our own leftovers from an aborted prior run so the sole-tenant
+      # assert below only fails on genuine *external* GPU contamination.
+      # Kill by socket only. Do NOT pkill on the binary path -- that pattern
+      # matches this script's own argv and SIGKILLs the wrapping shell
+      # (runbook obstacle pkill_self_match). Our servers bind one of these ports.
+      become: true
+      ansible.builtin.shell: |
+        for p in 11435 11436 11437; do fuser -k ${p}/tcp 2>/dev/null || true; done
+        sleep 2
+        exit 0
+      changed_when: false
+
+    - name: Sole-tenant assert (no other compute apps hold the GPU)
+      ansible.builtin.shell: |
+        nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader
+      register: compute_apps
+      changed_when: false
+      failed_when: compute_apps.stdout | trim | length > 0
+
+    - name: Stop Ollama so it cannot co-reside in VRAM mid-run
+      become: true
+      ansible.builtin.systemd:
+        name: ollama
+        state: stopped
+      ignore_errors: true
+
+    - name: Lock GPU clocks to TDP-rated (kills boost-driven timing variance)
+      become: true
+      ansible.builtin.command: nvidia-smi --lock-gpu-clocks=tdp
+      changed_when: true
+
+    - name: Record host inventory + current (locked) clocks (provenance)
+      # NOTE: do not interpolate a registered command's stdout into a shell —
+      # nvidia-smi clock output contains '(' which breaks /bin/sh. Query fresh.
+      ansible.builtin.shell: |
+        echo "=== current (locked) clocks ==="
+        nvidia-smi --query-gpu=clocks.current.sm,clocks.current.memory --format=csv,noheader
+        echo "=== uname -r ==="; uname -r
+        echo "=== driver/cuda ==="; nvidia-smi --query-gpu=driver_version --format=csv,noheader
+        nvcc --version 2>/dev/null | tail -1 || echo "nvcc: n/a"
+        echo "=== gpu spec ==="; nvidia-smi --query-gpu=name,memory.total,clocks.max.memory,clocks.max.sm --format=csv,noheader
+      register: host_inv
+      changed_when: false
+
+    - name: Write host-inventory.txt
+      ansible.builtin.copy:
+        dest: "{{ evidence_dir }}/host-inventory.txt"
+        mode: "0644"
+        content: "{{ host_inv.stdout }}\n"
+
+    - name: Thermal precondition — idle check then short warmup
+      ansible.builtin.shell: |
+        util=$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | head -1)
+        echo "idle_util=$util"
+        # 30 s warmup generation so the first measured cell is not cold.
+        LD_LIBRARY_PATH={{ cuda_lib }} \
+          {{ llama_bin_dir }}/llama-bench \
+          -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 -p 256 -n 128 -r 1 >/dev/null 2>&1 || true
+        echo "warmup_done=$(date -Is)"
+      register: warmup
+      changed_when: false
+
+    - name: Preflight summary
+      ansible.builtin.debug:
+        msg: "{{ host_inv.stdout_lines }} | {{ warmup.stdout_lines }}"
+
+- name: kv4 Phase B — throughput matrix (llama-bench + L2 sidecar)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    bench_bin: "{{ llama_bin_dir }}/llama-bench"
+    reps: "{{ 3 if matrix_profile | default('smoke') == 'smoke' else 5 }}"
+    sidecar_query: timestamp,utilization.gpu,utilization.memory,memory.used,power.draw,temperature.gpu,clocks.current.sm,clocks.current.memory,pstate
+    # Each cell = one condition = one runs.yaml entry. depth>0 uses -d (decode
+    # at KV depth) to expose the kv4 throughput crossover at long context.
+    bench_cells_smoke:
+      - {cond: "qwen3-1.7b__kvf16__ngl99__d0",    model: qwen3-1.7b,  gguf: qwen3-1.7b.gguf,  kv: f16,    ngl: 99, pp: 512, tg: 128, depth: 0}
+      - {cond: "qwen3-1.7b__kvturbo4__ngl99__d0", model: qwen3-1.7b,  gguf: qwen3-1.7b.gguf,  kv: turbo4, ngl: 99, pp: 512, tg: 128, depth: 0}
+    bench_cells_full:
+      - {cond: "qwen3-1.7b__kvf16__ngl99__d0",       model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: f16,    ngl: 99, pp: 512, tg: 128, depth: 0}
+      - {cond: "qwen3-1.7b__kvturbo4__ngl99__d0",    model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: turbo4, ngl: 99, pp: 512, tg: 128, depth: 0}
+      - {cond: "qwen3-1.7b__kvf16__ngl99__d8192",    model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: f16,    ngl: 99, pp: 512, tg: 128, depth: 8192}
+      - {cond: "qwen3-1.7b__kvturbo4__ngl99__d8192", model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: turbo4, ngl: 99, pp: 512, tg: 128, depth: 8192}
+      - {cond: "qwen3-1.7b__kvf16__ngl99__d32768",   model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: f16,    ngl: 99, pp: 512, tg: 128, depth: 32768}
+      - {cond: "qwen3-1.7b__kvturbo4__ngl99__d32768",model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: turbo4, ngl: 99, pp: 512, tg: 128, depth: 32768}
+      - {cond: "qwen3-1.7b__kvturbo3__ngl99__d32768",model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: turbo3, ngl: 99, pp: 512, tg: 128, depth: 32768}
+      - {cond: "qwen3-1.7b__kvturbo2__ngl99__d32768",model: qwen3-1.7b, gguf: qwen3-1.7b.gguf, kv: turbo2, ngl: 99, pp: 512, tg: 128, depth: 32768}
+  tasks:
+
+    - name: Select bench cells for the active profile
+      ansible.builtin.set_fact:
+        bench_cells: "{{ bench_cells_full if matrix_profile | default('smoke') == 'full' else bench_cells_smoke }}"
+
+    - name: Run each cell wrapped in a 1 Hz nvidia-smi sidecar
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        nvidia-smi --query-gpu={{ sidecar_query }} \
+          --format=csv,noheader,nounits -lms 1000 > gpu-telemetry/$COND.csv 2>/dev/null &
+        SPID=$!
+        sleep 1
+        DEPTH_ARG=""
+        if [ "{{ item.depth }}" -gt 0 ]; then DEPTH_ARG="-d {{ item.depth }}"; fi
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ bench_bin }} \
+          -m {{ model_dir }}/{{ item.gguf }} \
+          -ngl {{ item.ngl }} -fa 1 \
+          -ctk {{ item.kv }} -ctv {{ item.kv }} \
+          -p {{ item.pp }} -n {{ item.tg }} $DEPTH_ARG \
+          -r {{ reps }} -o jsonl > bench/$COND.jsonl 2> bench/$COND.err
+        RC=$?
+        # Always reap the sidecar, then surface any bench failure.
+        kill $SPID 2>/dev/null || true
+        sleep 1
+        exit $RC
+      loop: "{{ bench_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: bench_runs
+      changed_when: true
+      # A per-cell OOM (e.g. f16 KV at deep context on 4 GB) is an expected
+      # DATA POINT, not a run-killer. Record it and keep going so Phase C/Z run.
+      failed_when: false
+
+    - name: Report cells that failed (e.g. OOM at deep context) — non-fatal
+      ansible.builtin.debug:
+        msg: >-
+          Failed/OOM cells:
+          {{ bench_runs.results | selectattr('rc', 'defined') | selectattr('rc', 'ne', 0)
+             | map(attribute='item.cond') | list }}
+
+    - name: Show per-cell bench tails (sanity)
+      ansible.builtin.shell: "tail -1 {{ evidence_dir }}/bench/{{ item.cond }}.jsonl 2>/dev/null || cat {{ evidence_dir }}/bench/{{ item.cond }}.err"
+      loop: "{{ bench_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: bench_tails
+      changed_when: false
+
+    - name: Bench matrix summary
+      ansible.builtin.debug:
+        var: bench_tails.results | map(attribute='stdout') | list
+
+- name: kv4 Phase C — VRAM-vs-context capacity curve (server load)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    server_bin: "{{ llama_bin_dir }}/llama-server"
+    server_port: 11437
+    vram_cells_smoke:
+      - {cond: "vram__qwen3-1.7b__kvturbo4__c32768", gguf: qwen3-1.7b.gguf, kv: turbo4, ngl: 99, ctx: 32768}
+    vram_cells_full:
+      - {cond: "vram__qwen3-1.7b__kvf16__c8192",   gguf: qwen3-1.7b.gguf, kv: f16,    ngl: 99, ctx: 8192}
+      - {cond: "vram__qwen3-1.7b__kvturbo4__c8192",gguf: qwen3-1.7b.gguf, kv: turbo4, ngl: 99, ctx: 8192}
+      - {cond: "vram__qwen3-1.7b__kvf16__c32768",  gguf: qwen3-1.7b.gguf, kv: f16,    ngl: 99, ctx: 32768}
+      - {cond: "vram__qwen3-1.7b__kvturbo4__c32768",gguf: qwen3-1.7b.gguf,kv: turbo4, ngl: 99, ctx: 32768}
+      - {cond: "vram__qwen3-1.7b__kvturbo4__c65536",gguf: qwen3-1.7b.gguf,kv: turbo4, ngl: 99, ctx: 65536}
+  tasks:
+
+    - name: Select vram cells for the active profile
+      ansible.builtin.set_fact:
+        vram_cells: "{{ vram_cells_full if matrix_profile | default('smoke') == 'full' else vram_cells_smoke }}"
+
+    - name: Measure peak VRAM at each (kv-quant, context) — load, sample, kill
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        COND="{{ item.cond }}"
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        nvidia-smi --query-gpu=timestamp,memory.used --format=csv,noheader,nounits -lms 1000 \
+          > vram/$COND.csv 2>/dev/null &
+        SPID=$!
+        nohup env LD_LIBRARY_PATH={{ cuda_lib }} {{ server_bin }} \
+          -m {{ model_dir }}/{{ item.gguf }} -ngl {{ item.ngl }} -fa 1 \
+          --cache-type-k {{ item.kv }} --cache-type-v {{ item.kv }} \
+          -c {{ item.ctx }} --host 0.0.0.0 --port {{ server_port }} \
+          > vram/$COND.server.log 2>&1 &
+        SRV=$!
+        echo $SRV > vram/$COND.server.pid
+        # No `set -e`: cleanup at the bottom MUST run even if health never comes
+        # up (e.g. an OOM context cell). Health-wait with a DEAD-SERVER SENTINEL:
+        # if the server PID exits (OOM/crash), break immediately instead of
+        # polling a dead port for the full 180 s timeout.
+        HEALTH="down"
+        for i in $(seq 1 90); do
+          if ! kill -0 $SRV 2>/dev/null; then
+            echo "server pid $SRV exited before health (OOM/crash)" >> vram/$COND.server.log
+            HEALTH="oom"; break
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:{{ server_port }}/health 2>/dev/null || true)
+          [ "$code" = "200" ] && { HEALTH="up"; break; }
+          sleep 2
+        done
+        echo "health=$HEALTH" >> vram/$COND.server.log
+        curl -s http://127.0.0.1:{{ server_port }}/completion \
+          -d '{"prompt":"Say hi.","n_predict":16,"temperature":0}' > vram/$COND.gen.json 2>/dev/null || true
+        sleep 2
+        peak=$(sort -t, -k2 -n vram/$COND.csv | tail -1)
+        echo "$COND peak_line=$peak" >> vram/peaks.txt
+        # Guaranteed cleanup: explicit server PID, sidecar, then port.
+        kill -9 $SRV 2>/dev/null || true
+        kill $SPID 2>/dev/null || true
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        exit 0
+      loop: "{{ vram_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: vram_runs
+      changed_when: true
+
+    - name: VRAM peaks
+      ansible.builtin.shell: "cat {{ evidence_dir }}/vram/peaks.txt 2>/dev/null || true"
+      register: vram_peaks
+      changed_when: false
+
+    - name: VRAM summary
+      ansible.builtin.debug:
+        var: vram_peaks.stdout_lines
+
+# L4 per-kernel profiling: the "kernel/internal usage vs overall GPU usage" ask.
+# nvidia-smi (L2) reports coarse whole-GPU util; ncu reports per-kernel DRAM
+# read throughput + SM throughput (% of peak), proving decode is memory-bound
+# near the 192 GB/s roofline and isolating turbo4's dequant compute cost.
+# Only on profile=full (ncu replays kernels and is slow). Runs under sudo
+# (root bypasses the consumer-GPU perf-counter restriction; verified 2026-06-14).
+- name: kv4 Phase D — L4 ncu per-kernel profile (f16 vs turbo4 decode)
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-evidence"
+    cuda_lib: /usr/local/cuda/lib64
+    bench_bin: "{{ llama_bin_dir }}/llama-bench"
+    ncu_bin: ncu
+    ncu_metrics: dram__bytes_read.sum,dram__throughput.avg.pct_of_peak_sustained_elapsed,sm__throughput.avg.pct_of_peak_sustained_elapsed,gpu__compute_memory_throughput.avg.pct_of_peak_sustained_elapsed
+    ncu_cells:
+      - {cond: "ncu__kvf16__d2048",    kv: f16,    depth: 2048}
+      - {cond: "ncu__kvturbo4__d2048", kv: turbo4, depth: 2048}
+  tasks:
+
+    - name: Profile decode kernels with ncu (per-kernel DRAM + SM throughput)
+      when: matrix_profile | default('smoke') == 'full'
+      become: true
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ ncu_bin }} \
+          --metrics {{ ncu_metrics }} \
+          --launch-count 30 --target-processes all --csv \
+          {{ bench_bin }} -m {{ model_dir }}/qwen3-1.7b.gguf -ngl 99 -fa 1 \
+          -ctk {{ item.kv }} -ctv {{ item.kv }} -p 0 -n 8 -d {{ item.depth }} -r 1 \
+          > ncu/{{ item.cond }}.csv 2> ncu/{{ item.cond }}.log
+        exit 0
+      loop: "{{ ncu_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      changed_when: true
+      failed_when: false
+
+    - name: ncu profile summary (hot decode kernel rows)
+      when: matrix_profile | default('smoke') == 'full'
+      ansible.builtin.shell: "grep -iE 'mul_mat_vec|flash|softmax|cpy|Kernel Name' {{ evidence_dir }}/ncu/{{ item.cond }}.csv 2>/dev/null | head -8 || true"
+      loop: "{{ ncu_cells }}"
+      loop_control: {label: "{{ item.cond }}"}
+      register: ncu_summary
+      changed_when: false
+
+    - name: ncu summary
+      when: matrix_profile | default('smoke') == 'full'
+      ansible.builtin.debug:
+        var: ncu_summary.results | map(attribute='stdout') | list
+
+- name: kv4 Phase Z — reset clocks + fetch evidence
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-evidence"
+  tasks:
+
+    - name: Always reset GPU clocks (release the boost lock)
+      become: true
+      ansible.builtin.command: nvidia-smi --reset-gpu-clocks
+      changed_when: true
+      ignore_errors: true
+
+    - name: Restart Ollama (leave host in expected state)
+      become: true
+      ansible.builtin.systemd:
+        name: ollama
+        state: started
+      ignore_errors: true
+
+    - name: Ensure controller evidence dir exists (synchronize won't mkdir -p)
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/evidence/kv4"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+
+    - name: Fetch evidence tree to controller
+      ansible.posix.synchronize:
+        src: "{{ evidence_dir }}/"
+        dest: "{{ playbook_dir }}/evidence/kv4/"
+        mode: pull
+        recursive: true
+
+    - name: Done
+      ansible.builtin.debug:
+        msg: "kv4 matrix complete (profile={{ matrix_profile | default('smoke') }}). Evidence: ./evidence/kv4/"

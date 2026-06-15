@@ -1,0 +1,187 @@
+0.00.065.959 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.065.970 I device_info:
+0.00.273.897 I   - CUDA0   : NVIDIA GeForce GTX 1650 (3709 MiB, 3637 MiB free)
+0.00.273.916 I   - CPU     : QEMU Virtual CPU version 2.5+ (17923 MiB, 17923 MiB free)
+0.00.274.069 I system_info: n_threads = 6 (n_threads_batch = 6) / 6 | CUDA : ARCHS = 750 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | CPU : SSE3 = 1 | SSSE3 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.274.130 I srv          init: running without SSL
+0.00.274.217 I srv          init: using 8 threads for HTTP server
+0.00.274.470 I srv         start: binding port with default address family
+0.00.275.784 I srv          main: loading model
+0.00.275.810 I srv    load_model: loading model '<model-dir>/qwen3-1.7b.gguf'
+0.00.275.895 I common_init_result: fitting params to device memory ...
+0.00.275.902 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.871.362 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.850.337 W llama_context: n_ctx_seq (2048) < n_ctx_train (40960) -- the full capacity of the model will not be utilized
+0.01.871.287 W common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.01.961.229 I srv    load_model: initializing slots, n_slots = 4
+0.01.987.605 I common_speculative_init: adding speculative implementation 'ngram-cache'
+0.01.987.629 I srv    load_model: speculative decoding context initialized
+0.01.987.630 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 2048
+0.01.987.640 I slot   load_model: id  1 | task -1 | new slot, n_ctx = 2048
+0.01.987.641 I slot   load_model: id  2 | task -1 | new slot, n_ctx = 2048
+0.01.987.641 I slot   load_model: id  3 | task -1 | new slot, n_ctx = 2048
+0.01.987.782 I srv    load_model: prompt cache is enabled, size limit: 8192 MiB
+0.01.987.788 I srv    load_model: use `--cache-ram 0` to disable the prompt cache
+0.01.987.789 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.01.987.854 W srv          init: --cache-idle-slots requires --kv-unified, disabling
+0.01.998.794 I init: chat template, example_format: '<|im_start|>system
+You are a helpful assistant<|im_end|>
+<|im_start|>user
+Hello<|im_end|>
+<|im_start|>assistant
+Hi there<|im_end|>
+<|im_start|>user
+How are you?<|im_end|>
+<|im_start|>assistant
+'
+0.02.005.071 I srv          init: init: chat template, thinking = 1
+0.02.005.118 I srv          main: model loaded
+0.02.005.137 I srv          main: server is listening on http://0.0.0.0:11439
+0.02.005.149 I srv  update_slots: all slots are idle
+0.04.015.220 I slot get_availabl: id  3 | task -1 | selected slot by LRU, t_last = -1
+0.04.015.230 I srv  get_availabl: updating prompt cache
+0.04.015.242 I srv          load:  - looking for better prompt, base f_keep = -1.000, sim = 0.000
+0.04.015.246 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 8192 tokens, 8589934592 est)
+0.04.015.247 I srv  get_availabl: prompt cache update took 0.01 ms
+0.04.015.294 I slot launch_slot_: id  3 | task 0 | processing task, is_child = 0
+0.10.848.115 I slot get_availabl: id  2 | task -1 | selected slot by LRU, t_last = -1
+0.10.848.127 I srv  get_availabl: updating prompt cache
+0.10.848.132 I srv          load:  - looking for better prompt, base f_keep = -1.000, sim = 0.000
+0.10.848.135 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 8192 tokens, 8589934592 est)
+0.10.848.137 I srv  get_availabl: prompt cache update took 0.01 ms
+0.10.848.169 I slot launch_slot_: id  2 | task 2 | processing task, is_child = 0
+0.10.848.171 I slot get_availabl: id  1 | task -1 | selected slot by LRU, t_last = -1
+0.10.848.171 I srv  get_availabl: updating prompt cache
+0.10.848.172 I srv          load:  - looking for better prompt, base f_keep = -1.000, sim = 0.000
+0.10.848.174 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 8192 tokens, 8589934592 est)
+0.10.848.174 I srv  get_availabl: prompt cache update took 0.00 ms
+0.10.848.202 I slot launch_slot_: id  1 | task 4 | processing task, is_child = 0
+0.10.848.204 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.10.848.205 I srv  get_availabl: updating prompt cache
+0.10.848.205 I srv          load:  - looking for better prompt, base f_keep = -1.000, sim = 0.000
+0.10.848.206 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 8192 tokens, 8589934592 est)
+0.10.848.207 I srv  get_availabl: prompt cache update took 0.00 ms
+0.10.848.223 I slot launch_slot_: id  0 | task 3 | processing task, is_child = 0
+0.18.806.256 I slot print_timing: id  1 | task 4 | prompt processing, n_tokens =    262, progress = 0.15, t =   7.96 s / 32.93 tokens per second
+0.26.846.265 I slot print_timing: id  2 | task 2 | prompt processing, n_tokens =    515, progress = 0.29, t =   8.04 s / 64.06 tokens per second
+0.37.608.323 I slot print_timing: id  3 | task 0 | n_decoded =    100, tg =   3.74 t/s
+0.37.609.204 I slot print_timing: id  0 | task 3 | n_decoded =    100, tg =   5.32 t/s
+0.37.657.239 I slot print_timing: id  1 | task 4 | n_decoded =    100, tg =   9.24 t/s
+0.38.491.309 I slot print_timing: id  2 | task 2 | n_decoded =    100, tg =  16.05 t/s
+0.39.497.772 I slot print_timing: id  3 | task 0 | 
+prompt eval time =    6832.78 ms /  1777 tokens (    3.85 ms per token,   260.07 tokens per second)
+       eval time =   28649.65 ms /   128 tokens (  223.83 ms per token,     4.47 tokens per second)
+      total time =   35482.43 ms /  1905 tokens
+draft acceptance rate = 0.32203 (   57 accepted /   177 generated)
+0.39.497.957 I statistics ngram-cache: #calls(b,g,a) = 4 70 84, #gen drafts = 84, #acc drafts = 49, #gen tokens = 662, #acc tokens = 209, dur(b,g,a) = 0.003, 3.493, 0.032 ms
+0.39.498.088 I slot      release: id  3 | task 0 | stop processing: n_tokens = 1904, truncated = 0
+0.39.646.804 I slot print_timing: id  1 | task 4 | 
+prompt eval time =   15988.85 ms /  1777 tokens (    9.00 ms per token,   111.14 tokens per second)
+       eval time =   12808.87 ms /   128 tokens (  100.07 ms per token,     9.99 tokens per second)
+      total time =   28797.73 ms /  1905 tokens
+draft acceptance rate = 0.35849 (   57 accepted /   159 generated)
+0.39.646.833 I statistics ngram-cache: #calls(b,g,a) = 4 72 84, #gen drafts = 86, #acc drafts = 49, #gen tokens = 674, #acc tokens = 209, dur(b,g,a) = 0.003, 3.559, 0.032 ms
+0.39.646.945 I slot      release: id  1 | task 4 | stop processing: n_tokens = 1904, truncated = 0
+0.39.755.288 I slot print_timing: id  0 | task 3 | 
+prompt eval time =    7952.23 ms /  1777 tokens (    4.48 ms per token,   223.46 tokens per second)
+       eval time =   20954.42 ms /   128 tokens (  163.71 ms per token,     6.11 tokens per second)
+      total time =   28906.64 ms /  1905 tokens
+draft acceptance rate = 0.29775 (   53 accepted /   178 generated)
+0.39.755.316 I statistics ngram-cache: #calls(b,g,a) = 4 75 86, #gen drafts = 86, #acc drafts = 50, #gen tokens = 674, #acc tokens = 210, dur(b,g,a) = 0.003, 3.591, 0.032 ms
+0.39.755.391 I slot      release: id  0 | task 3 | stop processing: n_tokens = 1904, truncated = 0
+0.40.064.438 I slot print_timing: id  2 | task 2 | 
+prompt eval time =   13454.73 ms /  1777 tokens (    7.57 ms per token,   132.07 tokens per second)
+       eval time =    7803.08 ms /   128 tokens (   60.96 ms per token,    16.40 tokens per second)
+      total time =   21257.81 ms /  1905 tokens
+draft acceptance rate = 0.24855 (   43 accepted /   173 generated)
+0.40.064.468 I statistics ngram-cache: #calls(b,g,a) = 4 86 88, #gen drafts = 88, #acc drafts = 50, #gen tokens = 687, #acc tokens = 210, dur(b,g,a) = 0.003, 3.685, 0.033 ms
+0.40.064.533 I slot      release: id  2 | task 2 | stop processing: n_tokens = 1904, truncated = 0
+0.40.064.552 I srv  update_slots: all slots are idle
+0.40.073.471 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+0.40.073.551 I slot launch_slot_: id  0 | task 92 | processing task, is_child = 0
+0.40.073.562 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+0.40.073.587 I slot launch_slot_: id  1 | task 93 | processing task, is_child = 0
+0.47.950.549 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+0.47.950.596 I slot launch_slot_: id  2 | task 95 | processing task, is_child = 0
+0.47.950.601 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+0.47.950.616 I slot launch_slot_: id  3 | task 96 | processing task, is_child = 0
+0.47.950.651 I slot print_timing: id  1 | task 93 | prompt processing, n_tokens =    271, progress = 0.15, t =   7.88 s / 34.41 tokens per second
+0.55.926.610 I slot print_timing: id  2 | task 95 | prompt processing, n_tokens =    533, progress = 0.30, t =   7.98 s / 66.83 tokens per second
+1.03.895.823 I slot print_timing: id  3 | task 96 | prompt processing, n_tokens =    786, progress = 0.44, t =   7.97 s / 98.63 tokens per second
+1.12.994.509 I slot print_timing: id  3 | task 96 | n_decoded =    100, tg =  21.02 t/s
+1.13.529.170 I slot print_timing: id  2 | task 95 | n_decoded =    100, tg =  10.37 t/s
+1.13.716.545 I slot print_timing: id  1 | task 93 | n_decoded =    100, tg =   5.62 t/s
+1.14.385.600 I slot print_timing: id  0 | task 92 | n_decoded =    100, tg =   3.78 t/s
+1.14.766.348 I slot print_timing: id  3 | task 96 | 
+prompt eval time =   12311.15 ms /  1777 tokens (    6.93 ms per token,   144.34 tokens per second)
+       eval time =    6528.20 ms /   128 tokens (   51.00 ms per token,    19.61 tokens per second)
+      total time =   18839.35 ms /  1905 tokens
+draft acceptance rate = 0.39773 (   70 accepted /   176 generated)
+1.14.766.390 I statistics ngram-cache: #calls(b,g,a) = 8 146 169, #gen drafts = 169, #acc drafts = 97, #gen tokens = 1327, #acc tokens = 428, dur(b,g,a) = 0.004, 5.133, 0.054 ms
+1.14.766.488 I slot      release: id  3 | task 96 | stop processing: n_tokens = 1904, truncated = 0
+1.15.424.482 I slot print_timing: id  2 | task 95 | 
+prompt eval time =   15937.16 ms /  1777 tokens (    8.97 ms per token,   111.50 tokens per second)
+       eval time =   11536.28 ms /   128 tokens (   90.13 ms per token,    11.10 tokens per second)
+      total time =   27473.44 ms /  1905 tokens
+draft acceptance rate = 0.33714 (   59 accepted /   175 generated)
+1.15.424.511 I statistics ngram-cache: #calls(b,g,a) = 8 156 175, #gen drafts = 175, #acc drafts = 99, #gen tokens = 1374, #acc tokens = 438, dur(b,g,a) = 0.004, 5.307, 0.055 ms
+1.15.424.599 I slot      release: id  2 | task 95 | stop processing: n_tokens = 1904, truncated = 0
+1.15.467.409 I slot print_timing: id  1 | task 93 | 
+prompt eval time =   15848.47 ms /  1777 tokens (    8.92 ms per token,   112.12 tokens per second)
+       eval time =   19544.34 ms /   128 tokens (  152.69 ms per token,     6.55 tokens per second)
+      total time =   35392.81 ms /  1905 tokens
+draft acceptance rate = 0.32203 (   57 accepted /   177 generated)
+1.15.467.434 I statistics ngram-cache: #calls(b,g,a) = 8 157 176, #gen drafts = 176, #acc drafts = 100, #gen tokens = 1375, #acc tokens = 439, dur(b,g,a) = 0.004, 5.331, 0.055 ms
+1.15.467.515 I slot      release: id  1 | task 93 | stop processing: n_tokens = 1904, truncated = 0
+1.15.789.034 I slot print_timing: id  0 | task 92 | 
+prompt eval time =    7876.92 ms /  1777 tokens (    4.43 ms per token,   225.60 tokens per second)
+       eval time =   27838.50 ms /   128 tokens (  217.49 ms per token,     4.60 tokens per second)
+      total time =   35715.42 ms /  1905 tokens
+draft acceptance rate = 0.24855 (   43 accepted /   173 generated)
+1.15.789.060 I statistics ngram-cache: #calls(b,g,a) = 8 169 178, #gen drafts = 178, #acc drafts = 100, #gen tokens = 1388, #acc tokens = 439, dur(b,g,a) = 0.004, 5.403, 0.056 ms
+1.15.789.122 I slot      release: id  0 | task 92 | stop processing: n_tokens = 1904, truncated = 0
+1.15.789.147 I srv  update_slots: all slots are idle
+1.15.796.134 I slot get_availabl: id  0 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+1.15.796.201 I slot launch_slot_: id  0 | task 181 | processing task, is_child = 0
+1.15.796.209 I slot get_availabl: id  1 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+1.15.796.227 I slot launch_slot_: id  1 | task 182 | processing task, is_child = 0
+1.23.673.051 I slot get_availabl: id  2 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+1.23.673.110 I slot launch_slot_: id  2 | task 184 | processing task, is_child = 0
+1.23.673.115 I slot get_availabl: id  3 | task -1 | selected slot by LCP similarity, sim_best = 1.000 (> 0.100 thold), f_keep = 0.933
+1.23.673.135 I slot launch_slot_: id  3 | task 185 | processing task, is_child = 0
+1.23.673.168 I slot print_timing: id  1 | task 182 | prompt processing, n_tokens =    271, progress = 0.15, t =   7.88 s / 34.41 tokens per second
+1.31.649.850 I slot print_timing: id  2 | task 184 | prompt processing, n_tokens =    533, progress = 0.30, t =   7.98 s / 66.82 tokens per second
+1.39.621.109 I slot print_timing: id  3 | task 185 | prompt processing, n_tokens =    786, progress = 0.44, t =   7.97 s / 98.61 tokens per second
+1.48.717.574 I slot print_timing: id  3 | task 185 | n_decoded =    100, tg =  21.03 t/s
+1.49.251.739 I slot print_timing: id  2 | task 184 | n_decoded =    100, tg =  10.37 t/s
+1.49.439.431 I slot print_timing: id  1 | task 182 | n_decoded =    100, tg =   5.62 t/s
+1.50.099.159 I slot print_timing: id  0 | task 181 | n_decoded =    100, tg =   3.78 t/s
+1.50.474.602 I slot print_timing: id  3 | task 185 | 
+prompt eval time =   12312.72 ms /  1777 tokens (    6.93 ms per token,   144.32 tokens per second)
+       eval time =    6511.52 ms /   128 tokens (   50.87 ms per token,    19.66 tokens per second)
+      total time =   18824.25 ms /  1905 tokens
+draft acceptance rate = 0.39773 (   70 accepted /   176 generated)
+1.50.474.641 I statistics ngram-cache: #calls(b,g,a) = 12 229 259, #gen drafts = 259, #acc drafts = 147, #gen tokens = 2028, #acc tokens = 657, dur(b,g,a) = 0.006, 6.881, 0.085 ms
+1.50.474.738 I slot      release: id  3 | task 185 | stop processing: n_tokens = 1904, truncated = 0
+1.51.126.283 I slot print_timing: id  2 | task 184 | 
+prompt eval time =   15939.44 ms /  1777 tokens (    8.97 ms per token,   111.48 tokens per second)
+       eval time =   11513.29 ms /   128 tokens (   89.95 ms per token,    11.12 tokens per second)
+      total time =   27452.73 ms /  1905 tokens
+draft acceptance rate = 0.33714 (   59 accepted /   175 generated)
+1.51.126.311 I statistics ngram-cache: #calls(b,g,a) = 12 239 265, #gen drafts = 265, #acc drafts = 149, #gen tokens = 2075, #acc tokens = 667, dur(b,g,a) = 0.006, 7.043, 0.087 ms
+1.51.126.396 I slot      release: id  2 | task 184 | stop processing: n_tokens = 1904, truncated = 0
+1.51.168.820 I slot print_timing: id  1 | task 182 | 
+prompt eval time =   15848.69 ms /  1777 tokens (    8.92 ms per token,   112.12 tokens per second)
+       eval time =   19523.16 ms /   128 tokens (  152.52 ms per token,     6.56 tokens per second)
+      total time =   35371.86 ms /  1905 tokens
+draft acceptance rate = 0.32203 (   57 accepted /   177 generated)
+1.51.168.843 I statistics ngram-cache: #calls(b,g,a) = 12 240 266, #gen drafts = 266, #acc drafts = 150, #gen tokens = 2076, #acc tokens = 668, dur(b,g,a) = 0.006, 7.057, 0.087 ms
+1.51.168.945 I slot      release: id  1 | task 182 | stop processing: n_tokens = 1904, truncated = 0
+1.51.491.752 I slot print_timing: id  0 | task 181 | 
+prompt eval time =    7876.78 ms /  1777 tokens (    4.43 ms per token,   225.60 tokens per second)
+       eval time =   27818.71 ms /   128 tokens (  217.33 ms per token,     4.60 tokens per second)
+      total time =   35695.49 ms /  1905 tokens
+draft acceptance rate = 0.24855 (   43 accepted /   173 generated)
+1.51.491.783 I statistics ngram-cache: #calls(b,g,a) = 12 252 268, #gen drafts = 268, #acc drafts = 150, #gen tokens = 2089, #acc tokens = 668, dur(b,g,a) = 0.006, 7.157, 0.088 ms
+1.51.491.865 I slot      release: id  0 | task 181 | stop processing: n_tokens = 1904, truncated = 0
+1.51.491.886 I srv  update_slots: all slots are idle

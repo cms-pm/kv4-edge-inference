@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite the accompanying paper."
+title: "kv4-edge-inference: reproduction package for workload-dependent 4-bit KV-cache quantization on a 4 GB Turing GPU"
+authors:
+  - family-names: Slothouber
+    given-names: C.M.
+    affiliation: Praqsys.Net
+year: 2026
+license: MIT
+repository-code: "https://github.com/<org>/kv4-edge-inference"
+preferred-citation:
+  type: article
+  title: "The kv4 Trade-off Is Workload-Dependent: A Depth- and Workload-Resolved Study of 4-bit KV-Cache Quantization on a 4 GB Turing GPU"
+  authors:
+    - family-names: Slothouber
+      given-names: C.M.
+      affiliation: Praqsys.Net
+  year: 2026
+  notes: "Add SSRN abstract id / DOI on release."

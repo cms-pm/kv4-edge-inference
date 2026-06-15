@@ -1,0 +1,190 @@
+0.00.068.515 I log_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.00.068.526 I device_info:
+0.00.323.964 I   - CUDA0   : NVIDIA GeForce GTX 1650 (3709 MiB, 3637 MiB free)
+0.00.323.988 I   - CPU     : QEMU Virtual CPU version 2.5+ (17923 MiB, 17923 MiB free)
+0.00.324.155 I system_info: n_threads = 6 (n_threads_batch = 6) / 6 | CUDA : ARCHS = 750 | USE_GRAPHS = 1 | PEER_MAX_BATCH_SIZE = 128 | CPU : SSE3 = 1 | SSSE3 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.00.324.229 I srv          init: running without SSL
+0.00.324.307 I srv          init: using 5 threads for HTTP server
+0.00.324.554 I srv         start: binding port with default address family
+0.00.325.986 I srv          main: loading model
+0.00.326.029 I srv    load_model: loading model '<model-dir>/minicpm5-1b.gguf'
+0.00.326.243 I common_init_result: fitting params to device memory ...
+0.00.326.260 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.01.391.056 W llama_context: n_ctx_seq (4096) < n_ctx_train (131072) -- the full capacity of the model will not be utilized
+0.01.406.302 W common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.01.461.288 I srv    load_model: initializing slots, n_slots = 1
+0.01.471.411 I common_speculative_init: adding speculative implementation 'ngram-cache'
+0.01.471.444 I srv    load_model: speculative decoding context initialized
+0.01.471.446 I slot   load_model: id  0 | task -1 | new slot, n_ctx = 4096
+0.01.471.594 I srv    load_model: prompt cache is enabled, size limit: 8192 MiB
+0.01.471.607 I srv    load_model: use `--cache-ram 0` to disable the prompt cache
+0.01.471.608 I srv    load_model: for more info see https://github.com/ggml-org/llama.cpp/pull/16391
+0.01.471.663 W srv          init: --cache-idle-slots requires --kv-unified, disabling
+0.01.480.383 I init: chat template, example_format: '<s><|im_start|>system
+You are a helpful assistant<|im_end|>
+<|im_start|>user
+Hello<|im_end|>
+<|im_start|>assistant
+Hi there<|im_end|>
+<|im_start|>user
+How are you?<|im_end|>
+<|im_start|>assistant
+<think>
+'
+0.01.484.177 I srv          init: init: chat template, thinking = 1
+0.01.484.236 I srv          main: model loaded
+0.01.484.244 I srv          main: server is listening on http://0.0.0.0:11439
+0.01.484.256 I srv  update_slots: all slots are idle
+0.02.009.086 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+0.02.009.096 I srv  get_availabl: updating prompt cache
+0.02.009.112 I srv          load:  - looking for better prompt, base f_keep = -1.000, sim = 0.000
+0.02.009.116 I srv        update:  - cache state: 0 prompts, 0.000 MiB (limits: 8192.000 MiB, 4096 tokens, 8589934592 est)
+0.02.009.118 I srv  get_availabl: prompt cache update took 0.02 ms
+0.02.009.192 I slot launch_slot_: id  0 | task 0 | processing task, is_child = 0
+0.04.467.134 I slot print_timing: id  0 | task 0 | 
+prompt eval time =    2052.18 ms /  1148 tokens (    1.79 ms per token,   559.41 tokens per second)
+       eval time =     405.73 ms /    33 tokens (   12.29 ms per token,    81.34 tokens per second)
+      total time =    2457.91 ms /  1181 tokens
+draft acceptance rate = 0.28571 (   16 accepted /    56 generated)
+0.04.467.209 I statistics ngram-cache: #calls(b,g,a) = 1 16 7, #gen drafts = 7, #acc drafts = 4, #gen tokens = 56, #acc tokens = 16, dur(b,g,a) = 0.001, 2.174, 0.000 ms
+0.04.467.366 I slot      release: id  0 | task 0 | stop processing: n_tokens = 1180, truncated = 0
+0.04.467.372 I srv  update_slots: all slots are idle
+0.04.471.507 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43643402715
+0.04.471.516 I srv  get_availabl: updating prompt cache
+0.04.471.580 W srv   prompt_save:  - saving prompt with length 1180, total state size = 27.670 MiB (draft: 0.000 MiB)
+0.04.488.554 I srv          load:  - looking for better prompt, base f_keep = 0.020, sim = 0.022
+0.04.488.567 I srv        update:  - cache state: 1 prompts, 27.670 MiB (limits: 8192.000 MiB, 4096 tokens, 349347 est)
+0.04.488.569 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.04.488.570 I srv  get_availabl: prompt cache update took 17.05 ms
+0.04.488.596 I slot launch_slot_: id  0 | task 18 | processing task, is_child = 0
+0.08.062.161 I slot print_timing: id  0 | task 18 | 
+prompt eval time =    1932.73 ms /  1096 tokens (    1.76 ms per token,   567.07 tokens per second)
+       eval time =    1640.81 ms /   100 tokens (   16.41 ms per token,    60.95 tokens per second)
+      total time =    3573.54 ms /  1196 tokens
+draft acceptance rate = 0.09804 (   15 accepted /   153 generated)
+0.08.062.196 I statistics ngram-cache: #calls(b,g,a) = 2 100 27, #gen drafts = 27, #acc drafts = 12, #gen tokens = 209, #acc tokens = 31, dur(b,g,a) = 0.002, 2.690, 0.007 ms
+0.08.062.348 I slot      release: id  0 | task 18 | stop processing: n_tokens = 1195, truncated = 0
+0.08.062.362 I srv  update_slots: all slots are idle
+0.08.066.783 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43646997702
+0.08.066.791 I srv  get_availabl: updating prompt cache
+0.08.066.841 W srv   prompt_save:  - saving prompt with length 1195, total state size = 28.022 MiB (draft: 0.000 MiB)
+0.08.100.546 I srv          load:  - looking for better prompt, base f_keep = 0.020, sim = 0.021
+0.08.100.558 I srv        update:  - cache state: 2 prompts, 55.692 MiB (limits: 8192.000 MiB, 4096 tokens, 349347 est)
+0.08.100.560 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.08.100.561 I srv        update:    - prompt 0x55fba13c4840:    1195 tokens, checkpoints:  0,    28.022 MiB
+0.08.100.562 I srv  get_availabl: prompt cache update took 33.77 ms
+0.08.100.589 I slot launch_slot_: id  0 | task 104 | processing task, is_child = 0
+0.11.861.597 I slot print_timing: id  0 | task 104 | n_decoded =    100, tg =  64.45 t/s
+0.12.122.150 I slot print_timing: id  0 | task 104 | 
+prompt eval time =    2209.50 ms /  1123 tokens (    1.97 ms per token,   508.26 tokens per second)
+       eval time =    1812.04 ms /   128 tokens (   14.16 ms per token,    70.64 tokens per second)
+      total time =    4021.53 ms /  1251 tokens
+draft acceptance rate = 0.06667 (    9 accepted /   135 generated)
+0.12.122.208 I statistics ngram-cache: #calls(b,g,a) = 3 217 47, #gen drafts = 47, #acc drafts = 20, #gen tokens = 344, #acc tokens = 40, dur(b,g,a) = 0.002, 3.332, 0.010 ms
+0.12.122.360 I slot      release: id  0 | task 104 | stop processing: n_tokens = 1250, truncated = 0
+0.12.122.389 I srv  update_slots: all slots are idle
+0.12.127.016 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43651057725
+0.12.127.031 I srv  get_availabl: updating prompt cache
+0.12.127.146 W srv   prompt_save:  - saving prompt with length 1250, total state size = 29.312 MiB (draft: 0.000 MiB)
+0.12.155.322 I srv          load:  - looking for better prompt, base f_keep = 0.019, sim = 0.019
+0.12.155.335 I srv        update:  - cache state: 3 prompts, 85.004 MiB (limits: 8192.000 MiB, 4096 tokens, 349347 est)
+0.12.155.336 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.12.155.337 I srv        update:    - prompt 0x55fba13c4840:    1195 tokens, checkpoints:  0,    28.022 MiB
+0.12.155.338 I srv        update:    - prompt 0x55fba28877e0:    1250 tokens, checkpoints:  0,    29.312 MiB
+0.12.155.340 I srv  get_availabl: prompt cache update took 28.31 ms
+0.12.155.371 I slot launch_slot_: id  0 | task 224 | processing task, is_child = 0
+0.16.021.244 I slot print_timing: id  0 | task 224 | n_decoded =    100, tg =  74.04 t/s
+0.16.228.149 I slot print_timing: id  0 | task 224 | 
+prompt eval time =    2515.19 ms /  1287 tokens (    1.95 ms per token,   511.69 tokens per second)
+       eval time =    1557.55 ms /   111 tokens (   14.03 ms per token,    71.27 tokens per second)
+      total time =    4072.74 ms /  1398 tokens
+draft acceptance rate = 0.04301 (    4 accepted /    93 generated)
+0.16.228.213 I statistics ngram-cache: #calls(b,g,a) = 4 323 61, #gen drafts = 61, #acc drafts = 22, #gen tokens = 437, #acc tokens = 44, dur(b,g,a) = 0.004, 4.189, 0.014 ms
+0.16.228.395 I slot      release: id  0 | task 224 | stop processing: n_tokens = 1397, truncated = 0
+0.16.228.420 I srv  update_slots: all slots are idle
+0.16.233.435 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43655163748
+0.16.233.443 I srv  get_availabl: updating prompt cache
+0.16.233.525 W srv   prompt_save:  - saving prompt with length 1397, total state size = 32.759 MiB (draft: 0.000 MiB)
+0.16.260.145 I srv          load:  - looking for better prompt, base f_keep = 0.017, sim = 0.021
+0.16.260.158 I srv        update:  - cache state: 4 prompts, 117.763 MiB (limits: 8192.000 MiB, 4096 tokens, 349347 est)
+0.16.260.160 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.16.260.161 I srv        update:    - prompt 0x55fba13c4840:    1195 tokens, checkpoints:  0,    28.022 MiB
+0.16.260.161 I srv        update:    - prompt 0x55fba28877e0:    1250 tokens, checkpoints:  0,    29.312 MiB
+0.16.260.162 I srv        update:    - prompt 0x55fba2992da0:    1397 tokens, checkpoints:  0,    32.759 MiB
+0.16.260.163 I srv  get_availabl: prompt cache update took 26.72 ms
+0.16.260.214 I slot launch_slot_: id  0 | task 332 | processing task, is_child = 0
+0.20.122.222 I slot print_timing: id  0 | task 332 | n_decoded =    100, tg =  56.75 t/s
+0.20.445.205 I slot print_timing: id  0 | task 332 | 
+prompt eval time =    2099.74 ms /  1150 tokens (    1.83 ms per token,   547.69 tokens per second)
+       eval time =    2085.22 ms /   128 tokens (   16.29 ms per token,    61.38 tokens per second)
+      total time =    4184.97 ms /  1278 tokens
+draft acceptance rate = 0.08571 (   18 accepted /   210 generated)
+0.20.445.248 I statistics ngram-cache: #calls(b,g,a) = 5 431 94, #gen drafts = 94, #acc drafts = 35, #gen tokens = 647, #acc tokens = 62, dur(b,g,a) = 0.004, 5.047, 0.023 ms
+0.20.445.384 I slot      release: id  0 | task 332 | stop processing: n_tokens = 1277, truncated = 0
+0.20.445.394 I srv  update_slots: all slots are idle
+0.20.449.333 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43659380734
+0.20.449.342 I srv  get_availabl: updating prompt cache
+0.20.449.405 W srv   prompt_save:  - saving prompt with length 1277, total state size = 29.945 MiB (draft: 0.000 MiB)
+0.20.478.033 I srv          load:  - looking for better prompt, base f_keep = 0.019, sim = 0.022
+0.20.478.047 I srv        update:  - cache state: 5 prompts, 147.708 MiB (limits: 8192.000 MiB, 4096 tokens, 349347 est)
+0.20.478.049 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.20.478.050 I srv        update:    - prompt 0x55fba13c4840:    1195 tokens, checkpoints:  0,    28.022 MiB
+0.20.478.051 I srv        update:    - prompt 0x55fba28877e0:    1250 tokens, checkpoints:  0,    29.312 MiB
+0.20.478.052 I srv        update:    - prompt 0x55fba2992da0:    1397 tokens, checkpoints:  0,    32.759 MiB
+0.20.478.053 I srv        update:    - prompt 0x55fba2869f90:    1277 tokens, checkpoints:  0,    29.945 MiB
+0.20.478.054 I srv  get_availabl: prompt cache update took 28.71 ms
+0.20.478.081 I slot launch_slot_: id  0 | task 443 | processing task, is_child = 0
+0.23.874.957 I slot print_timing: id  0 | task 443 | n_decoded =    100, tg =  70.01 t/s
+0.24.234.823 I slot print_timing: id  0 | task 443 | 
+prompt eval time =    1968.52 ms /  1109 tokens (    1.78 ms per token,   563.37 tokens per second)
+       eval time =    1788.20 ms /   128 tokens (   13.97 ms per token,    71.58 tokens per second)
+      total time =    3756.72 ms /  1237 tokens
+draft acceptance rate = 0.05833 (    7 accepted /   120 generated)
+0.24.234.856 I statistics ngram-cache: #calls(b,g,a) = 6 550 114, #gen drafts = 114, #acc drafts = 41, #gen tokens = 767, #acc tokens = 69, dur(b,g,a) = 0.004, 5.857, 0.027 ms
+0.24.235.012 I slot      release: id  0 | task 443 | stop processing: n_tokens = 1236, truncated = 0
+0.24.235.026 I srv  update_slots: all slots are idle
+0.24.239.501 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43663170362
+0.24.239.516 I srv  get_availabl: updating prompt cache
+0.24.239.639 W srv   prompt_save:  - saving prompt with length 1236, total state size = 28.983 MiB (draft: 0.000 MiB)
+0.24.270.075 I srv          load:  - looking for better prompt, base f_keep = 0.019, sim = 0.019
+0.24.270.090 I srv        update:  - cache state: 6 prompts, 176.691 MiB (limits: 8192.000 MiB, 4096 tokens, 349347 est)
+0.24.270.092 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.24.270.093 I srv        update:    - prompt 0x55fba13c4840:    1195 tokens, checkpoints:  0,    28.022 MiB
+0.24.270.094 I srv        update:    - prompt 0x55fba28877e0:    1250 tokens, checkpoints:  0,    29.312 MiB
+0.24.270.095 I srv        update:    - prompt 0x55fba2992da0:    1397 tokens, checkpoints:  0,    32.759 MiB
+0.24.270.096 I srv        update:    - prompt 0x55fba2869f90:    1277 tokens, checkpoints:  0,    29.945 MiB
+0.24.270.097 I srv        update:    - prompt 0x55fba288f680:    1236 tokens, checkpoints:  0,    28.983 MiB
+0.24.270.098 I srv  get_availabl: prompt cache update took 30.58 ms
+0.24.270.129 I slot launch_slot_: id  0 | task 565 | processing task, is_child = 0
+0.28.333.408 I slot print_timing: id  0 | task 565 | n_decoded =    100, tg =  62.21 t/s
+0.28.718.142 I slot print_timing: id  0 | task 565 | 
+prompt eval time =    2455.85 ms /  1291 tokens (    1.90 ms per token,   525.68 tokens per second)
+       eval time =    1992.13 ms /   128 tokens (   15.56 ms per token,    64.25 tokens per second)
+      total time =    4447.98 ms /  1419 tokens
+draft acceptance rate = 0.11173 (   20 accepted /   179 generated)
+0.28.718.170 I statistics ngram-cache: #calls(b,g,a) = 7 657 144, #gen drafts = 144, #acc drafts = 56, #gen tokens = 946, #acc tokens = 89, dur(b,g,a) = 0.004, 6.647, 0.032 ms
+0.28.718.304 I slot      release: id  0 | task 565 | stop processing: n_tokens = 1418, truncated = 0
+0.28.718.314 I srv  update_slots: all slots are idle
+0.28.722.182 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 43667653653
+0.28.722.190 I srv  get_availabl: updating prompt cache
+0.28.722.240 W srv   prompt_save:  - saving prompt with length 1418, total state size = 33.251 MiB (draft: 0.000 MiB)
+0.28.748.866 I srv          load:  - looking for better prompt, base f_keep = 0.017, sim = 0.024
+0.28.748.879 I srv        update:  - cache state: 7 prompts, 209.942 MiB (limits: 8192.000 MiB, 4096 tokens, 349348 est)
+0.28.748.881 I srv        update:    - prompt 0x55fba13c4170:    1180 tokens, checkpoints:  0,    27.670 MiB
+0.28.748.882 I srv        update:    - prompt 0x55fba13c4840:    1195 tokens, checkpoints:  0,    28.022 MiB
+0.28.748.883 I srv        update:    - prompt 0x55fba28877e0:    1250 tokens, checkpoints:  0,    29.312 MiB
+0.28.748.884 I srv        update:    - prompt 0x55fba2992da0:    1397 tokens, checkpoints:  0,    32.759 MiB
+0.28.748.885 I srv        update:    - prompt 0x55fba2869f90:    1277 tokens, checkpoints:  0,    29.945 MiB
+0.28.748.886 I srv        update:    - prompt 0x55fba288f680:    1236 tokens, checkpoints:  0,    28.983 MiB
+0.28.748.887 I srv        update:    - prompt 0x55fba13c2cf0:    1418 tokens, checkpoints:  0,    33.251 MiB
+0.28.748.888 I srv  get_availabl: prompt cache update took 26.70 ms
+0.28.748.912 I slot launch_slot_: id  0 | task 674 | processing task, is_child = 0
+0.32.641.323 I slot print_timing: id  0 | task 674 | n_decoded =    100, tg =  47.20 t/s
+0.33.384.554 I slot print_timing: id  0 | task 674 | 
+prompt eval time =    1773.81 ms /  1018 tokens (    1.74 ms per token,   573.91 tokens per second)
+       eval time =    2861.80 ms /   128 tokens (   22.36 ms per token,    44.73 tokens per second)
+      total time =    4635.61 ms /  1146 tokens
+draft acceptance rate = 0.07669 (   25 accepted /   326 generated)
+0.33.384.598 I statistics ngram-cache: #calls(b,g,a) = 8 758 193, #gen drafts = 193, #acc drafts = 77, #gen tokens = 1272, #acc tokens = 114, dur(b,g,a) = 0.006, 7.519, 0.044 ms
+0.33.384.829 I slot      release: id  0 | task 674 | stop processing: n_tokens = 1145, truncated = 0
+0.33.384.855 I srv  update_slots: all slots are idle

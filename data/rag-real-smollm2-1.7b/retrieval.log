@@ -1,0 +1,11 @@
+chunks: 79 (win=512 stride=256)
+embedded all chunks
+  q1_gpu_bw: top-8 chunks, 4347 chars
+  q2_gen_pct: top-8 chunks, 4340 chars
+  q3_prefill: top-8 chunks, 4346 chars
+  q4_model: top-8 chunks, 4341 chars
+  q5_speedup: top-8 chunks, 4342 chars
+  q6_threshold: top-8 chunks, 4351 chars
+  q7_embed: top-8 chunks, 4327 chars
+  q8_oom: top-8 chunks, 4332 chars
+wrote retrieval_manifest.json

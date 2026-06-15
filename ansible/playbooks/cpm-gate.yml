@@ -1,0 +1,158 @@
+---
+# MiniCPM5-1B kv4 PRE-SCREEN GATE.
+# SCN-3.1 flagged A5 (MiniCPM5-1B) as "per-arch kv4 (turbo4) on the sm_75 fork
+# UNVERIFIED -> pre-screen gate", because MiniCPM is non-strictly-vanilla
+# (scale_emb / scale_depth). Empirical-admission policy: cheap pre-screen, let
+# empiricism decide. Two checks:
+#   1. FUNCTIONAL  - does turbo4 LOAD + bench without crashing on this arch?
+#   2. COHERENCE   - is turbo4 output sane vs f16 (a non-vanilla arch can run but
+#                    emit garbage)? Known-answer prompt, greedy.
+# PASS (both, turbo4) => MiniCPM is eligible for the full E1/V3 treatment.
+# FAIL => stays excluded with a recorded failure mode.
+# Run:  ansible-playbook playbooks/kv4-cpm-gate.yml
+
+- name: cpm-gate Phase A — light preflight
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-cpm-gate"
+  tasks:
+    - name: Scrub + recreate evidence tree
+      become: true
+      ansible.builtin.shell: |
+        rm -rf {{ evidence_dir }}
+        mkdir -p {{ evidence_dir }}/bench {{ evidence_dir }}/coh
+        chown -R {{ ansible_user }}:{{ ansible_user }} {{ evidence_dir }}
+      changed_when: true
+    - name: Persistence on
+      become: true
+      ansible.builtin.command: nvidia-smi -pm 1
+      changed_when: false
+    - name: Clean slate by port
+      become: true
+      ansible.builtin.shell: "fuser -k 11439/tcp 2>/dev/null || true; sleep 2; exit 0"
+      changed_when: false
+    - name: Stop Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: stopped}
+    - name: Sole-tenant assert
+      ansible.builtin.shell: nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader
+      register: compute_apps
+      changed_when: false
+      failed_when: compute_apps.stdout | trim | length > 0
+    - name: Lock clocks to TDP
+      become: true
+      ansible.builtin.command: nvidia-smi --lock-gpu-clocks=tdp
+      changed_when: true
+
+- name: cpm-gate Phase B — functional + coherence gate
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-cpm-gate"
+    cuda_lib: /usr/local/cuda/lib64
+    bench_bin: "{{ llama_bin_dir }}/llama-bench"
+    server_bin: "{{ llama_bin_dir }}/llama-server"
+    server_port: 11439
+    model_file: minicpm5-1b.gguf
+    kvs: [f16, turbo4]
+  tasks:
+    - name: FUNCTIONAL — llama-bench load+run per KV (crash-tolerant)
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        KV={{ item }}
+        LD_LIBRARY_PATH={{ cuda_lib }} {{ bench_bin }} \
+          -m {{ model_dir }}/{{ model_file }} -ngl 99 -fa 1 \
+          -ctk $KV -ctv $KV -p 64 -n 64 -r 2 -o jsonl \
+          > bench/cpm_$KV.jsonl 2> bench/cpm_$KV.err
+        echo "bench exit=$?"
+        exit 0
+      loop: "{{ kvs }}"
+      loop_control: {label: "{{ item }}"}
+      changed_when: true
+      failed_when: false
+
+    - name: COHERENCE — server known-answer generation per KV (crash-tolerant)
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        KV={{ item }}
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2
+        nohup env LD_LIBRARY_PATH={{ cuda_lib }} {{ server_bin }} \
+          -m {{ model_dir }}/{{ model_file }} -ngl 99 -fa 1 \
+          --cache-type-k $KV --cache-type-v $KV -c 2048 \
+          --host 0.0.0.0 --port {{ server_port }} \
+          > coh/cpm_$KV.server.log 2>&1 &
+        SRV=$!
+        HEALTH="down"
+        for i in $(seq 1 60); do
+          if ! kill -0 $SRV 2>/dev/null; then echo "server exited (load fail)" >> coh/cpm_$KV.server.log; HEALTH="fail"; break; fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:{{ server_port }}/health 2>/dev/null || true)
+          [ "$code" = "200" ] && { HEALTH="up"; break; }
+          sleep 2
+        done
+        echo "health=$HEALTH" >> coh/cpm_$KV.server.log
+        if [ "$HEALTH" = "up" ]; then
+          python3 -c "import json;open('coh/cpm_$KV.req.json','w').write(json.dumps({'prompt':'Question: What is the capital of France? Answer:','n_predict':32,'temperature':0,'cache_prompt':False}))"
+          curl -s http://127.0.0.1:{{ server_port }}/completion -H 'Content-Type: application/json' \
+            --data-binary @coh/cpm_$KV.req.json > coh/cpm_$KV.gen.json 2>/dev/null || true
+        else
+          echo "{\"content\":\"<LOAD/HEALTH FAIL>\"}" > coh/cpm_$KV.gen.json
+        fi
+        kill -9 $SRV 2>/dev/null || true
+        fuser -k {{ server_port }}/tcp 2>/dev/null || true
+        sleep 2; exit 0
+      loop: "{{ kvs }}"
+      loop_control: {label: "{{ item }}"}
+      changed_when: true
+      failed_when: false
+
+    - name: GATE REPORT
+      ansible.builtin.shell: |
+        cd {{ evidence_dir }}
+        for KV in f16 turbo4; do
+          echo "=== $KV FUNCTIONAL (bench) ==="
+          tail -1 bench/cpm_$KV.jsonl 2>/dev/null | python3 -c "import sys,json;d=json.loads(sys.stdin.read() or '{}');print(' tg',round(d.get('avg_ts',0),1),'t/s build',d.get('build_commit')) if d else print(' BENCH-FAIL')" 2>/dev/null || { echo ' BENCH-FAIL:'; tail -2 bench/cpm_$KV.err; }
+          echo "=== $KV COHERENCE (gen content) ==="
+          python3 -c "import json;print(' '+repr(json.load(open('coh/cpm_$KV.gen.json')).get('content','')[:200]))" 2>/dev/null || echo ' GEN-FAIL'
+        done
+      register: gate
+      changed_when: false
+
+    - name: Gate result
+      ansible.builtin.debug:
+        var: gate.stdout_lines
+
+- name: cpm-gate Phase Z — reset + fetch
+  hosts: gpu
+  become: false
+  gather_facts: false
+  vars:
+    evidence_dir: "{{ work_dir }}/kv4-cpm-gate"
+  tasks:
+    - name: Reset GPU clocks
+      become: true
+      ansible.builtin.command: nvidia-smi --reset-gpu-clocks
+      changed_when: true
+      ignore_errors: true
+    - name: Restart Ollama
+      become: true
+      ansible.builtin.systemd: {name: ollama, state: started}
+      ignore_errors: true
+    - name: Ensure controller evidence dir exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/evidence/kv4-cpm-gate"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+    - name: Fetch evidence
+      ansible.posix.synchronize:
+        src: "{{ evidence_dir }}/"
+        dest: "{{ playbook_dir }}/evidence/kv4-cpm-gate/"
+        mode: pull
+        recursive: true
+    - name: Done
+      ansible.builtin.debug:
+        msg: "MiniCPM5-1B kv4 gate complete. Evidence: ./evidence/kv4-cpm-gate/"

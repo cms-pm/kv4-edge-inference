@@ -1,0 +1,100 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] and POST /query endpoints. Ingest chunks input documents
+into 512-character overlapping windows (64-character stride),
+embeds each chunk via the VRAM-aware scheduler, and stores
+normalized 768-dimensional vectors to a persistent NumPy
+store. Query embeds the question using nomic-embed-text [6],
+retrieves top-k chunks by cosine similarity, and generates an
+answer via the local llama.cpp server [3]. Fig. 1 shows the
+pipeline.
+TABLE I
+HARDWARE ANDSOFTWARECONFIGURATION
+Component Specification
+GPU (×2) NVIDIA Q
+
+[2] ut NVLink,
+degrading prefill 50× due to inter-device synchronization
+overhead.
+LegacyRAG is publicly available at https://github.com/
+azeez-1904/LegacyRAG.
+II. BACKGROUND ANDRELATEDWORK
+A. Retrieval-Augmented Generation
+Lewiset al.[1] introduced RAG as a framework augmenting
+generative models with a retrieval component. A standard RAG
+pipeline consists of: (1) document ingestion with chunking and
+embedding, (2) vector similarity retrieval, and (3) contextconditioned generation. Embedding models (100–500 MB)
+
+[3] ramework augmenting
+generative models with a retrieval component. A standard RAG
+pipeline consists of: (1) document ingestion with chunking and
+embedding, (2) vector similarity retrieval, and (3) contextconditioned generation. Embedding models (100–500 MB)
+
+benefit from batched GPU execution, while generation models
+(2–70 GB) require sustained VRAM throughout inference. On
+VRAM-limited hardware these requirements create a scheduling
+conflict that LegacyRAG addresses.
+B. LLM Quantization for Constrained Hard
+
+[4] E5-1620 v3 (Haswell, 4
+cores / 8 threads, 3.50 GHz base, 3.60 GHz max turbo, 10 MB
+L3 cache). Both K4200s occupy PCIe 3.0 x16 slots on the
+Dell Precision Tower 5810 motherboard.
+B. Architecture Overview
+LegacyRAG is a FastAPI service exposing POST /ingest
+and POST /query endpoints. Ingest chunks input documents
+into 512-character overlapping windows (64-character stride),
+embeds each chunk via the VRAM-aware scheduler, and stores
+normalized 768-dimensional vectors to a persistent NumPy
+store. Query embeds
+
+[5] nl. The
+GenerationContext is a thread-safe counter that
+prevents the embedding model [6] ( ≈280 MB peak) from
+competing with active generation for VRAM. The threshold
+Tvram = 800 MB was selected empirically. With phi3-mini
+occupying ≈2.1 GB and the KV cache allocating up to 1.5 GB,
+GPU 0 maintains 1,400–1,550 MB free and GPU 1 maintains
+≈1,994 MB free under normal load, providing ≈600 MB
+margin above the embedding model’s peak.
+D. Generation Backend
+The generation component posts to the llama.cpp server [3]
+
+[6] the question using nomic-embed-text [6],
+retrieves top-k chunks by cosine similarity, and generates an
+answer via the local llama.cpp server [3]. Fig. 1 shows the
+pipeline.
+TABLE I
+HARDWARE ANDSOFTWARECONFIGURATION
+Component Specification
+GPU (×2) NVIDIA Quadro K4200
+VRAM per GPU 4 GB GDDR5 (173 GB/s)
+GPU architecture Maxwell GM204, 2014
+Compute cap. 3.0 (dropped CUDA 11.0 [2])
+Vulkan support 1.2 (no FP16, no int dot)
+CPU Intel Xeon E5-1620 v3, 4C/8T, 3.50 GHz
+PCIe slots 2×PCIe 3.0 x16
+Host OS Ubuntu 24.04
+
+[7] //registry.khronos.org/vulkan/specs/1.3/html/
+[5] M. Abdin, S. A. Jacobs, A. A. Awan, J. Aneja, A. Awadallahet al., “Phi-3
+technical report: A highly capable language model locally on your phone,”
+arXiv preprint, arXiv:2404.14219, 2024, doi: 10.48550/arXiv.2404.14219.
+[6] Z. Nussbaum, J. X. Morris, B. Duderstadt, and A. Mulyar, “Nomic
+embed: Training a reproducible long context text embedder,”arXiv
+preprint, arXiv:2402.01613, 2024, doi: 10.48550/arXiv.2402.01613.
+[7] Z. Zhou, X. Chen, E. Li, L. Zeng, K. Luo
+
+[8] .2404.14219.
+[6] Z. Nussbaum, J. X. Morris, B. Duderstadt, and A. Mulyar, “Nomic
+embed: Training a reproducible long context text embedder,”arXiv
+preprint, arXiv:2402.01613, 2024, doi: 10.48550/arXiv.2402.01613.
+[7] Z. Zhou, X. Chen, E. Li, L. Zeng, K. Luo, and J. Zhang, “Edge
+intelligence: Paving the last mile of artificial intelligence with edge
+computing,”Proc. IEEE, vol. 107, no. 8, pp. 1738–1762, Aug. 2019,
+doi: 10.1109/JPROC.2019.2918951.
+[8] “EdgeLLM: Fast on-device LLM inference with speculative dec
+
+Question: Which embedding model does LegacyRAG use to embed document chunks?
+Answer:

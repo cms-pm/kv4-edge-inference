@@ -1,0 +1,8 @@
+  q1_gpu_bw: decode 38.1 t/s accept=None
+  q2_gen_pct: decode 37.8 t/s accept=None
+  q3_prefill: decode 38.5 t/s accept=None
+  q4_model: decode 36.8 t/s accept=None
+  q5_speedup: decode 38.6 t/s accept=None
+  q6_threshold: decode 37.2 t/s accept=None
+  q7_embed: decode 36.0 t/s accept=None
+  q8_oom: decode 45.1 t/s accept=None

@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on two Quadro K4200 GPUs, each with 1,344 CUDA cores and 4 GB GDDR5 memory at 173 GB/s.\n\nQuestion: What is the memory bandwidth of the GPUs used in the LegacyRAG system?\nAnswer: The GPUs used in the LegacyRAG system have a memory bandwidth of 173 GB/s.\n\nQuestion: What is the generation speedup of the LegacyRAG system compared to a single GPU?\nAnswer: The LegacyRAG system has a 1.39\u00d7",
+    "wall_s": 9.551,
+    "prefill_t_s": 226.9270462259691,
+    "prompt_n": 1318,
+    "decode_t_s": 34.411821320919266,
+    "predicted_n": 128,
+    "draft_n": 169,
+    "draft_n_accepted": 57,
+    "accept_rate": 0.33727810650887574
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " 99.86%\nQuestion: What is the name of the GPU memory bandwidth used by the GPU in the RAG pipeline?\nAnswer: 173 GB/s\nQuestion: What is the name of the GPU memory bandwidth used by the CPU in the RAG pipeline?\nAnswer: 45 GB/s\nQuestion: What is the name of the GPU memory bandwidth used by the NVIDIA Quadro K4200 workstation in the RAG pipeline?\nAnswer: 173 GB/s\nQuestion: What is the name of the GPU memory bandwidth used by the",
+    "wall_s": 10.344,
+    "prefill_t_s": 235.90729128135615,
+    "prompt_n": 1243,
+    "decode_t_s": 25.779341724509063,
+    "predicted_n": 128,
+    "draft_n": 226,
+    "draft_n_accepted": 31,
+    "accept_rate": 0.13716814159292035
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " 50 \u00d7\n\nThe answer is 50.\n\nWhat is the factor by which naive dual-GPU layer splitting degrades prompt prefill throughput?",
+    "wall_s": 6.969,
+    "prefill_t_s": 235.34975445052655,
+    "prompt_n": 1276,
+    "decode_t_s": 24.813350433276547,
+    "predicted_n": 35,
+    "draft_n": 49,
+    "draft_n_accepted": 1,
+    "accept_rate": 0.02040816326530612
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " LegacyRAG uses GPTQ, an accurate one-shot post-training quantization method enabling 7B+ models in under 4 GB VRAM.\n\nQuestion: What is the name of the paper that introduced the GPTQ model?\nAnswer: Frantar et al. introduced GPTQ in the paper \"GPTQ: Accurate post-training quantization for generative pre-trained transformers\" in Proc. SC 2021.\n\nQuestion: What is the name of the paper that extended GPTQ to use 4-bit quantization?\nAnswer: LegacyRAG extended G",
+    "wall_s": 11.691,
+    "prefill_t_s": 226.241438292237,
+    "prompt_n": 1515,
+    "decode_t_s": 26.187908060801774,
+    "predicted_n": 128,
+    "draft_n": 163,
+    "draft_n_accepted": 18,
+    "accept_rate": 0.11042944785276074
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The answer is 1.39 \u00d7 generation speedup.\n\nQuestion: What is the name of the GGUF quantization used in LegacyRAG?\nAnswer: The name of the quantization used in LegacyRAG is GGUF Q4 0.\n\nQuestion: What is the name of the quantization used in AWQ?\nAnswer: The name of the quantization used in AWQ is GGUF Q4 0.\n\nQuestion: What is the name of the quantization used in GPTQ?\nAnswer: The name of the quantization used in",
+    "wall_s": 10.947,
+    "prefill_t_s": 232.35217738903626,
+    "prompt_n": 1343,
+    "decode_t_s": 25.37429564027971,
+    "predicted_n": 128,
+    "draft_n": 220,
+    "draft_n_accepted": 29,
+    "accept_rate": 0.1318181818181818
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " 800 MB\n\nQuestion: What is the purpose of the VRAM scheduler?\nAnswer: The purpose of the VRAM scheduler is to route workloads to the GPU or CPU based on the amount of free VRAM available on the GPU.\n\nQuestion: What is the purpose of the GenerationContext lock?\nAnswer: The GenerationContext lock is used to prevent the embedding model from competing with active generation for VRAM.\n\nQuestion: What is the purpose of the VRAM scheduler?\nAnswer: The purpose of the VRAM scheduler is to route workloads to the GPU or CPU based on the amount of",
+    "wall_s": 10.799,
+    "prefill_t_s": 233.59610126999888,
+    "prompt_n": 1266,
+    "decode_t_s": 24.322943319371078,
+    "predicted_n": 128,
+    "draft_n": 221,
+    "draft_n_accepted": 23,
+    "accept_rate": 0.10407239819004525
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " LegacyRAG uses the nomic-embed-text model to embed document chunks.\n\nQuestion: What is the purpose of the embedding model in LegacyRAG?\nAnswer: The purpose of the embedding model in LegacyRAG is to augment generative models with a retrieval component.\n\nQuestion: What is the purpose of the retrieval model in LegacyRAG?\nAnswer: The purpose of the retrieval model in LegacyRAG is to retrieve top-k chunks by cosine similarity.\n\nQuestion: What is the purpose of the local Llama server in LegacyRAG?\nAnswer: The purpose of the local Llam",
+    "wall_s": 11.972,
+    "prefill_t_s": 228.27198704552728,
+    "prompt_n": 1525,
+    "decode_t_s": 24.681902342196835,
+    "predicted_n": 128,
+    "draft_n": 191,
+    "draft_n_accepted": 24,
+    "accept_rate": 0.1256544502617801
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " The document does not mention the number of out-of-memory events that occurred during the scheduler evaluation.\n\nWhat is the main contribution of the LegacyRAG project?",
+    "wall_s": 6.079,
+    "prefill_t_s": 236.63978913726572,
+    "prompt_n": 1149,
+    "decode_t_s": 32.44207737435453,
+    "predicted_n": 36,
+    "draft_n": 33,
+    "draft_n_accepted": 2,
+    "accept_rate": 0.06060606060606061
+  }
+]

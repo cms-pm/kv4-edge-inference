@@ -1,0 +1,26 @@
+0.00.053.170 I common_init_result: fitting params to device memory ...
+0.00.053.181 I common_init_result: (for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on)
+0.00.863.554 W load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+0.01.235.521 W llama_context: n_ctx_seq (8192) < n_ctx_train (40960) -- the full capacity of the model will not be utilized
+0.01.255.704 W common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.03.710.076 I encoded   13 tokens in    0.108 seconds, speed: 1357.331 t/s
+0.03.710.078 I decoded  133 tokens in    2.263 seconds, speed:   58.760 t/s
+0.03.710.078 I 
+0.03.710.078 I n_draft      = 16
+0.03.710.079 I n_predict    = 133
+0.03.710.079 I n_drafted    = 66
+0.03.710.080 I t_draft_flat = 0.03 ms
+0.03.710.081 I t_draft      = 1.26 ms, 19.11 us per token, 52339.41 tokens per second
+0.03.710.082 I n_accept     = 9
+0.03.710.083 I accept       = 13.636%
+0.03.710.083 I 
+target:
+
+0.03.710.089 I common_perf_print:    sampling time =      53.82 ms
+0.03.710.090 I common_perf_print:    samplers time =      14.35 ms /   133 tokens
+0.03.710.094 I common_perf_print:        load time =     619.93 ms
+0.03.710.096 I common_perf_print: prompt eval time =     548.25 ms /    85 tokens (    6.45 ms per token,   155.04 tokens per second)
+0.03.710.098 I common_perf_print:        eval time =    1601.19 ms /   117 runs   (   13.69 ms per token,    73.07 tokens per second)
+0.03.710.099 I common_perf_print:       total time =    2372.34 ms /   202 tokens
+0.03.710.100 I common_perf_print: unaccounted time =     169.09 ms /   7.1 %      (total - sampling - prompt eval - eval) / (total)
+0.03.710.100 I common_perf_print:    graphs reused =        112

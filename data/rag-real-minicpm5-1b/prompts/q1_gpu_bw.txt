@@ -1,0 +1,104 @@
+You are a helpful assistant. Use only the provided context to answer the question concisely.
+
+Context:
+[1] m GPU memory
+bandwidth (173 GB/s vs. ≈45 GB/s dual-channel DDR4 on the
+E5-1620 v3), explaining the generation speedup.
+C. RAG Pipeline Benchmark
+Fig. 2 and Table III show end-to-end RAG latency for three
+sequential requests following the architecture of Lewiset al.[1].
+Generation accounts for 99.86% of total pipeline latency;
+embedding 0.14%; retrieval <0.001%. Any acceleration of
+embedding or retrieval—including the quantization gains of
+TABLE III
+LEGACYRAG PIPELINELATENCY(SEQUENTIAL, SINGLEGPU VULKAN)
+Req
+
+[2] 9 × generation speedup (9.07
+vs. 6.52 tok/s). Prompt evaluation is slower on GPU (8.85 vs.
+21.14 tok/s) because the K4200’s lack of FP16 and integer
+dot-product instructions forces FP32 fallback in the Vulkan
+backend [4]. Autoregressive decode benefits from GPU memory
+bandwidth (173 GB/s vs. ≈45 GB/s dual-channel DDR4 on the
+E5-1620 v3), explaining the generation speedup.
+C. RAG Pipeline Benchmark
+Fig. 2 and Table III show end-to-end RAG latency for three
+sequential requests following the architecture of Le
+
+[3] inations reduce throughput by up to
+2× even with high-bandwidth NVLink. On PCIe-only hardware
+as in our dual K4200 setup this effect is far more severe, as
+our prefill degradation experiments confirm (Section IV-F).
+III. SYSTEMDESIGN
+A. Hardware Configuration
+Table I summarizes the test platform. Each Quadro K4200
+(Maxwell GM204, 2014) provides 1,344 CUDA cores and
+4 GB GDDR5 at 173 GB/s. At Vulkan initialization, both
+cards report fp16: 0 , int dot: 0 , and matrix cores:
+none. The host CPU is an Intel Xeon
+
+[4] ion
+Table I summarizes the test platform. Each Quadro K4200
+(Maxwell GM204, 2014) provides 1,344 CUDA cores and
+4 GB GDDR5 at 173 GB/s. At Vulkan initialization, both
+cards report fp16: 0 , int dot: 0 , and matrix cores:
+none. The host CPU is an Intel Xeon E5-1620 v3 (Haswell, 4
+cores / 8 threads, 3.50 GHz base, 3.60 GHz max turbo, 10 MB
+L3 cache). Both K4200s occupy PCIe 3.0 x16 slots on the
+Dell Precision Tower 5810 motherboard.
+B. Architecture Overview
+LegacyRAG is a FastAPI service exposing POST /ingest
+
+[5] irm
+on Maxwell-class hardware.
+This paper makes four contributions:
+1) We demonstrate that Vulkan [4] provides a viable path to
+GPU-accelerated LLM inference on CUDA-abandoned
+hardware, achieving a 1.39 × generation speedup over
+CPU-only inference on the Quadro K4200.
+2) We design and implement LegacyRAG, a VRAM-aware
+RAG pipeline with a pre-operation scheduler that queries
+live GPU memory state and routes embedding workloads
+to prevent OOM conditions.
+3) We empirically characterize RAG pipeline performance
+
+[6] URATION
+Config Prefill Decode Max
+(tok/s) (tok/s)Conc.
+Single GPU
+(idle)
+∼26∼9 1
+Single GPU (sustained)
+1–6 0.29–1.66 1
+Dual GPU (idle)0.528.35 1
+Dual GPU (concurrent)
+N/A N/A0
+B. Value of VRAM-Aware Scheduling
+The CPU fallback path was not triggered in our experiments
+because VRAM stayed above threshold throughout. Its value is
+preventive: in institutional deployments where display servers
+and browser processes share GPU 0, available VRAM can
+drop by several hundred megabytes, bringing it toward the
+800 MB
+
+[7] essential for latency-sensitive
+and privacy-sensitive workloads. Recent work on on-device
+inference [8] demonstrates speculative decoding for mobile
+hardware, but assumes compute capability ≥6.0 (Pascal) and
+does not address CUDA-abandoned Maxwell cards. To our
+knowledge, no prior published work has characterized full RAG
+pipeline performance on Maxwell-era hardware via Vulkan.
+D. Multi-GPU Parallelism and Communication Overhead
+Narayananet al.[9] showed that sub-optimal tensor and
+pipeline parallelism comb
+
+[8] [12], offering a GPU compute path without CUDA.
+RAG [1] further complicates deployment on legacy hardware
+because it requires two concurrent GPU workloads: an embedding model for document retrieval and a generation model for
+answer synthesis. On constrained hardware these workloads
+compete for VRAM, and naive co-scheduling causes out-ofmemory (OOM) crashes. Multi-GPU inference literature [9]
+shows that inter-device synchronization dominates throughput
+at low memory bandwidth, a finding our experiments conf
+
+Question: What GPU does the LegacyRAG system run on, and what is that GPU's memory bandwidth?
+Answer:

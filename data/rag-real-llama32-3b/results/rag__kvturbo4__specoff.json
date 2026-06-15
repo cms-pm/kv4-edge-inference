@@ -1,0 +1,135 @@
+[
+  {
+    "id": "q1_gpu_bw",
+    "gold": [
+      "173 GB/s",
+      "173"
+    ],
+    "content": " The LegacyRAG system runs on Quadro K4200 GPUs, which have 4 GB GDDR5 memory at a bandwidth of 173 GB/s.",
+    "wall_s": 8.309,
+    "prefill_t_s": 153.1097795771771,
+    "prompt_n": 1136,
+    "decode_t_s": 38.080379603687106,
+    "predicted_n": 33,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q2_gen_pct",
+    "gold": [
+      "99.86"
+    ],
+    "content": " 99.86% (from [1]).\n\nNote: The provided context is a technical paper discussing the performance of a RAG (Recurrent Autoencoder for Generative Models) pipeline on a Maxwell-era GPU. The paper evaluates the performance of the pipeline on a dual-GPU setup and discusses various factors affecting its latency and throughput.",
+    "wall_s": 8.891,
+    "prefill_t_s": 153.98015985527002,
+    "prompt_n": 1084,
+    "decode_t_s": 37.8062926108423,
+    "predicted_n": 69,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q3_prefill",
+    "gold": [
+      "50x",
+      "50\u00d7",
+      "50 times",
+      "50-fold",
+      "50"
+    ],
+    "content": " Naive dual-GPU layer splitting degrades prompt prefill by 50 \u00d7 (from \u223c26 to 0.52 tok/s).",
+    "wall_s": 8.071,
+    "prefill_t_s": 154.31286547693284,
+    "prompt_n": 1120,
+    "decode_t_s": 38.53594247354507,
+    "predicted_n": 30,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q4_model",
+    "gold": [
+      "Phi-3",
+      "Q4_0",
+      "Q4 0",
+      "Q4"
+    ],
+    "content": " LegacyRAG uses GGUF Q4 0 quantization in llama.cpp, reducing phi3mini from \u223c7 GB FP16 to 2.03 GiB.",
+    "wall_s": 9.636,
+    "prefill_t_s": 152.20212813841485,
+    "prompt_n": 1312,
+    "decode_t_s": 36.77123998749778,
+    "predicted_n": 36,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q5_speedup",
+    "gold": [
+      "1.39"
+    ],
+    "content": " The Vulkan backend achieves a 1.39 \u00d7 generation speedup over CPU-only inference on the Quadro K4200.",
+    "wall_s": 8.41,
+    "prefill_t_s": 150.20450069433787,
+    "prompt_n": 1154,
+    "decode_t_s": 38.56016349509322,
+    "predicted_n": 26,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q6_threshold",
+    "gold": [
+      "800 MB",
+      "800"
+    ],
+    "content": " 800 MB. \n\nThis question requires the reader to recall a specific detail from the provided context. The correct answer is explicitly stated in the context as the default value of Tvram (ThresholdT vram) which is 800 MB. \n\nNote: The question is designed to be self-contained, and the answer can be determined without requiring external knowledge or context beyond what is provided in the question itself. \n\nLet me know if you want me to generate another question! \n\n(Also, I can try to make the questions more challenging if you'd like!) \n\nLet me know if you'd like me to generate another question! \n\n(",
+    "wall_s": 10.724,
+    "prefill_t_s": 152.87607410936258,
+    "prompt_n": 1110,
+    "decode_t_s": 37.24104381990696,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q7_embed",
+    "gold": [
+      "nomic-embed-text",
+      "nomic"
+    ],
+    "content": " The embedding model used by LegacyRAG is not explicitly stated in the provided context, but it is mentioned that the embedding models (100\u2013500 MB) are used in the standard RAG pipeline. However, it is also mentioned that the VRAM-aware scheduler is used to address the scheduling conflict on VRAM-limited hardware. Therefore, it can be inferred that LegacyRAG uses a VRAM-aware embedding model that is compatible with the VRAM-limited hardware configuration. \n\nNote: The question is answered based on the provided context, and the answer is concise and accurate. \n\nPlease let me know if you need any further assistance.",
+    "wall_s": 12.183,
+    "prefill_t_s": 150.97476350483208,
+    "prompt_n": 1299,
+    "decode_t_s": 36.01476380223618,
+    "predicted_n": 128,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  },
+  {
+    "id": "q8_oom",
+    "gold": [
+      "zero",
+      "0 OOM",
+      "no OOM",
+      "none"
+    ],
+    "content": " Zero OOM events occurred.",
+    "wall_s": 6.742,
+    "prefill_t_s": 155.00559759387372,
+    "prompt_n": 1016,
+    "decode_t_s": 45.09059989822408,
+    "predicted_n": 7,
+    "draft_n": null,
+    "draft_n_accepted": null,
+    "accept_rate": null
+  }
+]

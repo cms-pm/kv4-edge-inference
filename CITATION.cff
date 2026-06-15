@@ -7,7 +7,7 @@ authors:
     affiliation: Praqsys.Net
 year: 2026
 license: MIT
-repository-code: "https://github.com/<org>/kv4-edge-inference"
+repository-code: "https://github.com/cms-pm/kv4-edge-inference"
 preferred-citation:
   type: article
   title: "The kv4 Trade-off Is Workload-Dependent: A Depth- and Workload-Resolved Study of 4-bit KV-Cache Quantization on a 4 GB Turing GPU"
@@ -16,4 +16,5 @@ preferred-citation:
       given-names: C.M.
       affiliation: Praqsys.Net
   year: 2026
-  notes: "Add SSRN abstract id / DOI on release."
+  notes: "SSRN abstract id 6941538"
+  url: "https://ssrn.com/abstract=6941538"

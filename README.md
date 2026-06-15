@@ -94,7 +94,7 @@ appear verbatim in your corpus). Retrieval mirrors Shaik (2025): nomic-embed-tex
 
 ## Citation
 
-See `CITATION.cff`. Code & data: this repository. Paper: (add SSRN/DOI on release).
+See `CITATION.cff`. Code & data: https://github.com/cms-pm/kv4-edge-inference. Paper: SSRN 6941538 (https://ssrn.com/abstract=6941538).
 
 ## License
 

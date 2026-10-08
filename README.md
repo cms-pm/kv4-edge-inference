@@ -1,7 +1,12 @@
 # kv4-edge-inference
 
+[![Paper: SSRN 6941538](https://img.shields.io/badge/paper-SSRN%206941538-blue)](https://ssrn.com/abstract=6941538)
+[![License: MIT](https://img.shields.io/github/license/cms-pm/kv4-edge-inference)](LICENSE)
+[![Data: CC-BY-4.0](https://img.shields.io/badge/data-CC--BY--4.0-lightgrey)](data/LICENSE)
+
 Reproduction package for **"The kv4 Trade-off Is Workload-Dependent: A Depth- and
 Workload-Resolved Study of 4-bit KV-Cache Quantization on a 4 GB Turing GPU."**
+Read the paper on SSRN: <https://ssrn.com/abstract=6941538>.
 
 It contains everything needed to reproduce the study's measurements, analysis,
 and figures: the experiment runners (portable bash **and** Ansible), the measured
@@ -99,4 +104,4 @@ See `CITATION.cff`. Code & data: https://github.com/cms-pm/kv4-edge-inference. P
 ## License
 
 MIT (see `LICENSE`). The measured data under `data/` is released under
-CC-BY-4.0 — attribute the paper.
+CC-BY-4.0 (see `data/LICENSE`) — attribute the paper.

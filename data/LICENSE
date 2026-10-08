@@ -1,0 +1,10 @@
+The measured data in this directory (data/) is released under the Creative
+Commons Attribution 4.0 International License (CC-BY-4.0):
+https://creativecommons.org/licenses/by/4.0/
+
+When reusing the data, attribute the accompanying paper:
+C.M. Slothouber, "The kv4 Trade-off Is Workload-Dependent: A Depth- and
+Workload-Resolved Study of 4-bit KV-Cache Quantization on a 4 GB Turing GPU,"
+SSRN abstract 6941538, 2026. https://ssrn.com/abstract=6941538
+
+Code in this repository is MIT-licensed; see ../LICENSE.
